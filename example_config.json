@@ -1,0 +1,30 @@
+{
+    "reddit_id": "",
+    "reddit_secret": "",
+    "reddit_username": "",
+    "mode": "firehose",
+    "author_has": [
+        "3060",
+        "3060 Ti"
+    ],
+    "author_wants": [
+        "PayPal"
+    ],
+    "openrouter_api_key": "",
+    "author_has_llm_query": "",
+    "author_wants_llm_query": "",
+    "retrieve_older_posts": false,
+    "tinyurl": false,
+    "sl_expect_ovh": false,
+    "blinklink": false,
+    "push_notifications": false,
+    "topic_name": "",
+    "sms": false,
+    "gmail_address": "",
+    "app_password": "",
+    "sms_gateway": "",
+    "phone_number": "",
+    "webhook": false,
+    "webhook_url": "",
+    "webhook_ping": ""
+}
