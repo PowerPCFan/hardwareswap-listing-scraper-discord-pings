@@ -1,8 +1,8 @@
 import kroma
 import time
 import re as regexp
-from . import discord
 from . import reddit
+from . import discord
 from datetime import datetime
 
 
@@ -56,8 +56,8 @@ def parse_have_want(title: str) -> tuple[str, str]:
 
 
 def print_new_post(
-    subreddit: reddit.Subreddit, author: reddit.Redditor, h: str, w: str,
-    url: str, utc_date: float, flair: str, title: str, ping_config
+    author: reddit.Redditor, h: str, w: str, url: str, utc_date: float, flair: str,
+    webhook: str, role: int, category_name: str | None = None, is_all_listings_webhook: bool = False
 ) -> None:
 
     j, pk, ck = get_karma_string(author)  # use the full author var because the function needs the entire author object
@@ -79,11 +79,12 @@ def print_new_post(
     print(f"[W]: {kroma.style(w, foreground=kroma.ANSIColors.RED)}")
     print(f"URL: {kroma.style(url, foreground="#99ccff")}")
     print(f"Posted {kroma.style(date_posted, foreground="#ffffff")}")
-    print(kroma.style(f"Matches category '{ping_config.category_name}'", italic=True, bold=True))
+    if not is_all_listings_webhook and category_name:
+        print(kroma.style(f"Matches category '{category_name}'", italic=True, bold=True))
 
     discord.send_webhook(
-        webhook_url=ping_config.webhook,
-        content=f"<@&{ping_config.role}>" if ping_config.role else "",
+        webhook_url=webhook,
+        content=f"<@&{str(role)}>" if role else "",
         username="HardwareSwap Listing Scraper Alerts",
         embed=discord.create_embed(
             url=url,

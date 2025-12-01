@@ -17,7 +17,7 @@ class PingConfig:
     h: List[str]
     w: List[str]
     webhook: str
-    role: str
+    role: int
 
 
 @dataclass
@@ -25,6 +25,10 @@ class Config:
     reddit_id: str
     reddit_secret: str
     reddit_username: str
+
+    all_listings_webhook: str
+    all_listings_role: int
+
     pings: List[PingConfig]
 
     @staticmethod

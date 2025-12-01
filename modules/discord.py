@@ -50,7 +50,13 @@ def create_embed(
     }
 
 
-def send_webhook(webhook_url: str, content: str | None, embed: dict | None, username: str | None):
+def send_webhook(
+    webhook_url: str,
+    content: str | None,
+    embed: dict | None,
+    username: str | None,
+    raise_exception_instead_of_print: bool = False
+) -> None:
     # Prepare the JSON payload
     json_data = {
         "content": content if content is not None else "",
@@ -67,4 +73,7 @@ def send_webhook(webhook_url: str, content: str | None, embed: dict | None, user
                 foreground=kroma.ANSIColors.RED
             ))
     except requests.exceptions.RequestException as e:
-        print(kroma.style(f"Error sending webhook: {e}", foreground=kroma.ANSIColors.RED))
+        if raise_exception_instead_of_print:
+            raise Exception(f"Error sending webhook: {e}")
+        else:
+            print(kroma.style(f"Error sending webhook: {e}", foreground=kroma.ANSIColors.RED))
