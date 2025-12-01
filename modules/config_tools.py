@@ -13,6 +13,7 @@ class PingConfig:
     # h is short for have
     # w is short for want
     # and calc is short for calculator
+    category_name: str
     h: List[str]
     w: List[str]
     webhook: str
