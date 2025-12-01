@@ -1,19 +1,16 @@
 import requests
-from modules.systemd import Logger
-from modules.colors.hex_colors import HTMLColor
+import kroma
 
 
 def create_embed(
-    color: str, url: str, author: str, trades: str, have: str, want: str,
+    url: str, author: str, trades: str, have: str, want: str,
     joined: str, post_karma: str, comment_karma: str, date_posted: str
 ) -> dict:
-
-    embed_color: int | None = HTMLColor(color)
 
     return {
         "title": f"A new listing by u/{author} has been posted on r/HardwareSwap!",
         "url": url,
-        "color": embed_color if embed_color is not None else int(0x3498db),
+        "color": 0x3498db,
 
         "fields": [
             {
@@ -54,8 +51,6 @@ def create_embed(
 
 
 def send_webhook(webhook_url: str, content: str | None, embed: dict | None, username: str | None):
-    logger = Logger()
-
     # Prepare the JSON payload
     json_data = {
         "content": content if content is not None else "",
@@ -67,6 +62,9 @@ def send_webhook(webhook_url: str, content: str | None, embed: dict | None, user
     try:
         response = requests.post(webhook_url, json=json_data)
         if response.status_code not in [200, 204]:
-            logger.failed(f"Failed to send webhook. Status code: {response.status_code}. Response: {response.text}")
+            print(kroma.style(
+                f"Failed to send webhook. Status code: {response.status_code}. Response: {response.text}",
+                foreground=kroma.ANSIColors.RED
+            ))
     except requests.exceptions.RequestException as e:
-        logger.failed(f"Error sending webhook: {e}")
+        print(kroma.style(f"Error sending webhook: {e}", foreground=kroma.ANSIColors.RED))

@@ -1,11 +1,11 @@
+import kroma
 import praw
 from praw.models import Subreddit, Submission, Redditor  # noqa: F401
-from modules.config.configuration import config
-from modules.colors.ansi_codes import RESET, GREEN, BLUE
+from configuration import config
 
 
 def initialize() -> Subreddit:
-    print(f"{BLUE}Connecting to Reddit...{RESET}")
+    print(f"{kroma.style(text='Connecting to Reddit...', foreground=kroma.ANSIColors.BLUE)}")
 
     reddit = praw.Reddit(
         client_id=config.reddit_id,
@@ -15,6 +15,6 @@ def initialize() -> Subreddit:
 
     subreddit = reddit.subreddit("hardwareswap")
 
-    print(f"{GREEN}Connected successfully.{RESET}")
+    print(f"{kroma.style(text='Connected successfully.', foreground=kroma.ANSIColors.GREEN)}")
 
     return subreddit
