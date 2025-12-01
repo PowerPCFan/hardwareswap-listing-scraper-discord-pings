@@ -1,6 +1,6 @@
 import kroma
-import modules.splash as splash
-from configuration import config
+from . import splash
+from .configuration import config
 
 
 def print_welcome_text():

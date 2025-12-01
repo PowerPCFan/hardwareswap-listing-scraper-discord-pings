@@ -1,7 +1,7 @@
 import kroma
 import praw
 from praw.models import Subreddit, Submission, Redditor  # noqa: F401
-from configuration import config
+from .configuration import config
 
 
 def initialize() -> Subreddit:

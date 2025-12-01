@@ -1,8 +1,8 @@
 import kroma
 import time
 import re as regexp
-import discord
-import reddit
+from . import discord
+from . import reddit
 from datetime import datetime
 
 

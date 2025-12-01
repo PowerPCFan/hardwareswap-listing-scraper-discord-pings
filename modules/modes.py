@@ -1,6 +1,6 @@
-import reddit
-from configuration import config
-from utils import parse_have_want, print_new_post
+from . import reddit
+from .configuration import config
+from .utils import parse_have_want, print_new_post
 
 
 def match(subreddit: reddit.Subreddit) -> None:
