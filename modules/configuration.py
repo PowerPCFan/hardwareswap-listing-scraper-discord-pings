@@ -1,3 +1,3 @@
-from . import config_tools as conftools
+from .config_tools import Config
 
-config = conftools.Config.load()
+config = Config.load()

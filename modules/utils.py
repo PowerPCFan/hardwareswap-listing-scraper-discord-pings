@@ -1,8 +1,9 @@
-import kroma
 import time
 import re as regexp
 from . import reddit
 from . import discord
+from .configuration import config
+import kroma
 from datetime import datetime
 
 
@@ -46,18 +47,26 @@ def get_karma_string(author: reddit.Redditor) -> tuple[str, str, str]:
     return j, pk, ck
 
 
-def parse_have_want(title: str) -> tuple[str, str]:
+def parse_have_want(title: str, body: str | None = None, include_body: bool = False) -> tuple[str, str, str]:
     h_match = regexp.search(r'\[H\](.*?)\[W\]', title, regexp.IGNORECASE)
     w_match = regexp.search(r'\[W\](.*)', title, regexp.IGNORECASE)
 
-    h = h_match.group(1).strip() if h_match else ""
-    w = w_match.group(1).strip() if w_match else ""
-    return h, w
+    title_only_h = h_match.group(1).strip() if h_match else ""
+    w = w_match.group(1).strip() if w_match else ""  # W is always from title only
+
+    if include_body and body:
+        # h = parsed have value from title + post body (when body parsing is enabled in conf)
+        h = f"{title_only_h} {body}".strip()
+    else:
+        # use the old method (title-only)
+        h = title_only_h
+
+    return h, w, title_only_h
 
 
 def print_new_post(
-    author: reddit.Redditor, h: str, w: str, url: str, utc_date: float, flair: str,
-    webhook: str, role: int, category_name: str | None = None, is_all_listings_webhook: bool = False
+    author: reddit.Redditor, h: str, w: str, title_only_h: str, url: str, utc_date: float, flair: str,
+    webhook: str, role: int, post_body: str, category_name: str | None = None, is_all_listings_webhook: bool = False
 ) -> None:
 
     j, pk, ck = get_karma_string(author)  # use the full author var because the function needs the entire author object
@@ -70,15 +79,15 @@ def print_new_post(
     print(
         f"New post by {kroma.style(f'u/{author.name}', foreground=kroma.ANSIColors.BLUE)} "
         f"({kroma.style(trades, foreground=kroma.ANSIColors.YELLOW)} {'trades' if trades != 1 else 'trade'} | "
-        f"joined {kroma.style(j, foreground=kroma.ANSIColors.CYAN)} | "
-        f"post karma {kroma.style(pk, foreground=kroma.HTMLColors.ORANGE)} | "
-        f"comment karma {kroma.style(ck, foreground=kroma.HTMLColors.PURPLE)}):"
+        f"joined {kroma.style(str(j), foreground=kroma.ANSIColors.CYAN)} | "
+        f"post karma {kroma.style(str(pk), foreground=kroma.HTMLColors.ORANGE)} | "
+        f"comment karma {kroma.style(str(ck), foreground=kroma.HTMLColors.PURPLE)}):"
     )
 
-    print(f"[H]: {kroma.style(h, foreground=kroma.ANSIColors.GREEN)}")
+    print(f"[H]: {kroma.style(title_only_h, foreground=kroma.ANSIColors.GREEN)}")
     print(f"[W]: {kroma.style(w, foreground=kroma.ANSIColors.RED)}")
-    print(f"URL: {kroma.style(url, foreground="#99ccff")}")
-    print(f"Posted {kroma.style(date_posted, foreground="#ffffff")}")
+    print(f"URL: {kroma.style(url, foreground=kroma.HTMLColors.LIGHTSKYBLUE)}")
+    print(f"Posted {kroma.style(date_posted, foreground=kroma.HTMLColors.WHITE)}")
     if not is_all_listings_webhook and category_name:
         print(kroma.style(f"Matches category '{category_name}'", italic=True, bold=True))
 
@@ -90,11 +99,13 @@ def print_new_post(
             url=url,
             author=author.name,
             trades=trades,
-            have=str(h).replace("[H]", "").strip(),
+            have=str(title_only_h).replace("[H]", "").strip(),
             want=str(w).replace("[W]", "").strip(),
             joined=j,
             post_karma=pk,
             comment_karma=ck,
-            date_posted=date_posted
-        )
+            date_posted=date_posted,
+            post_body=post_body
+        ),
+        raise_exception_instead_of_print=config.debug_mode
     )

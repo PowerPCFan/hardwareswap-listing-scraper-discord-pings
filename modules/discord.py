@@ -1,13 +1,15 @@
 import requests
 import kroma
+import time
+from .imgur import get_primary_image_from_reddit_post
 
 
 def create_embed(
     url: str, author: str, trades: str, have: str, want: str,
-    joined: str, post_karma: str, comment_karma: str, date_posted: str
+    joined: str, post_karma: str, comment_karma: str, date_posted: str, post_body: str
 ) -> dict:
 
-    return {
+    embed = {
         "title": f"A new listing by u/{author} has been posted on r/HardwareSwap!",
         "url": url,
         "color": 0x3498db,
@@ -21,6 +23,7 @@ def create_embed(
             {
                 "name": "User Info:",
                 "value": (
+                    "ℹ️ *Be sure to check these values, they can be helpful for spotting scams!*\n"
                     f"- **{trades}** trades\n"
                     f"- Joined **{joined}**\n"
                     f"- **{post_karma}** post karma\n"
@@ -40,7 +43,7 @@ def create_embed(
             },
             {
                 "name": "Date Posted:",
-                "value": f"{date_posted}",
+                "value": date_posted,
                 "inline": True
             }
         ],
@@ -48,6 +51,12 @@ def create_embed(
             "url": "https://raw.githubusercontent.com/PowerPCFan/hardwareswap-listing-scraper/refs/heads/main/assets/3.png"  # noqa: E501
         },
     }
+
+    primary_image = get_primary_image_from_reddit_post(post_body)
+    if primary_image:
+        embed["image"] = {"url": primary_image}
+
+    return embed
 
 
 def send_webhook(
@@ -67,6 +76,17 @@ def send_webhook(
     # Send the webhook
     try:
         response = requests.post(webhook_url, json=json_data)
+
+        if response.status_code == 429:
+            default_retry = 1.5
+
+            try:
+                time.sleep(dict(response.json()).get("retry_after", default_retry))
+                response = requests.post(webhook_url, json=json_data)
+            except ValueError:
+                time.sleep(default_retry)
+                response = requests.post(webhook_url, json=json_data)
+
         if response.status_code not in [200, 204]:
             print(kroma.style(
                 f"Failed to send webhook. Status code: {response.status_code}. Response: {response.text}",

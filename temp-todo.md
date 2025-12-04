@@ -1,0 +1,4 @@
+- test body parsing
+- test not_h and not_w filters
+- simplify terminal output since this is webhook oriented not "display everything in terminal/push notifs" oriented like the upstream PowerPCFan/hardwareswap-listing-scraper project
+- price parsing??
