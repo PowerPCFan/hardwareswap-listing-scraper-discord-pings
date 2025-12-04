@@ -1,8 +1,8 @@
 import time
-import kroma
 import re as regexp
 from . import reddit
 from . import discord
+from .logger import logger
 from .configuration import config
 from datetime import datetime
 
@@ -68,28 +68,13 @@ def print_new_post(
     author: reddit.Redditor, h: str, w: str, title_only_h: str, url: str, utc_date: float, flair: str,
     webhook: str, role: int, post_body: str, category_name: str | None = None, is_all_listings_webhook: bool = False
 ) -> None:
-
     j, pk, ck = get_karma_string(author)  # use the full author var because the function needs the entire author object
     trades = get_trades_number(flair)
 
     date_posted = reddit_timestamp_creator(utc_date)
 
-    print("\n")  # newline for spacing
-
-    print(
-        f"New post by {kroma.style(f'u/{author.name}', foreground=kroma.ANSIColors.BLUE)} "
-        f"({kroma.style(trades, foreground=kroma.ANSIColors.YELLOW)} {'trades' if trades != 1 else 'trade'} | "
-        f"joined {kroma.style(str(j), foreground=kroma.ANSIColors.CYAN)} | "
-        f"post karma {kroma.style(str(pk), foreground=kroma.HTMLColors.ORANGE)} | "
-        f"comment karma {kroma.style(str(ck), foreground=kroma.HTMLColors.PURPLE)}):"
-    )
-
-    print(f"[H]: {kroma.style(title_only_h, foreground=kroma.ANSIColors.GREEN)}")
-    print(f"[W]: {kroma.style(w, foreground=kroma.ANSIColors.RED)}")
-    print(f"URL: {kroma.style(url, foreground=kroma.HTMLColors.LIGHTSKYBLUE)}")
-    print(f"Posted {kroma.style(date_posted, foreground=kroma.HTMLColors.WHITE)}")
-    if not is_all_listings_webhook and category_name:
-        print(kroma.style(f"Matches category '{category_name}'", italic=True, bold=True))
+    webhook_type = "all listings" if is_all_listings_webhook else f"category '{category_name}'"
+    logger.debug(f"Sending webhook for {webhook_type} to Discord")
 
     discord.send_webhook(
         webhook_url=webhook,

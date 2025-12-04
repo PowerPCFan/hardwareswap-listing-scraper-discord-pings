@@ -5,7 +5,8 @@ from .configuration import config
 
 
 def initialize() -> Subreddit:
-    logger.info("Connecting to Reddit...")
+    logger.info("Initializing Reddit API connection...")
+    logger.debug(f"Using Reddit username: u/{config.reddit_username}")
 
     reddit = praw.Reddit(
         client_id=config.reddit_id,
@@ -13,8 +14,8 @@ def initialize() -> Subreddit:
         user_agent=f"script:hardwareswap-listing-scraper (by u/{config.reddit_username})"
     )
 
+    logger.debug("Reddit instance created successfully")
     subreddit = reddit.subreddit("hardwareswap")
-
-    logger.info("Connected successfully.")
+    logger.info("Successfully connected to r/hardwareswap")
 
     return subreddit

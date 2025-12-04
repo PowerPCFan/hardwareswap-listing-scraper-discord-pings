@@ -3,7 +3,6 @@
 import sys
 import traceback
 from modules.logger import logger
-import modules.welcome as welcome
 import modules.reddit as reddit
 import modules.modes as modes
 import modules.discord as discord
@@ -11,8 +10,12 @@ from modules.configuration import config
 
 
 def main() -> None:
+    logger.info("Initializing HardwareSwap Listing Scraper...")
+
     # init subreddit
+    logger.debug("Connecting to Reddit API...")
     subreddit = reddit.initialize()
+    logger.info("Successfully connected to Reddit")
 
     # if send_test_webhooks is enabled, test every webhook
     # will raise exception if one webhook fails so then it will be caught in the main handler
@@ -23,6 +26,7 @@ def main() -> None:
             [(config.all_listings_webhook, "All Listings")] +
             [(ping.webhook, ping.category_name) for ping in config.pings]
         ):
+            logger.debug(f"Testing webhook for category: {category_name}")
             discord.send_webhook(
                 webhook_url=webhook_url,
                 content=f"Script started. This is a test webhook for the '{category_name}' category.",
@@ -33,10 +37,20 @@ def main() -> None:
 
         logger.info("All webhooks tested successfully.")
 
-    # print welcome text (splash text and config summary)
-    welcome.print_welcome_text()
+    # print welcome text
+    logger.newline()
+    logger.info("HardwareSwap Listing Scraper (Discord Pings Edition) starting...")
+    logger.info(f"Reddit Username: u/{config.reddit_username}")
+    logger.info(f"Debug Mode: {config.debug_mode}")
+    logger.info(f"Parse Body: {config.parse_body}")
+    logger.info(f"Parse Imgur Links: {config.parse_imgur_links}")
+    logger.info(f"Send Test Webhooks: {config.send_test_webhooks}")
+    logger.info(f"Configured {len(config.pings)} ping categories")
+    logger.info("Press Ctrl+C to exit")
+    logger.newline()
 
     # Start matching mode
+    logger.info("Starting listing monitoring...")
     modes.match(subreddit)
 
 
@@ -44,18 +58,14 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.warning("Exiting...")
+        logger.info("Exiting app. There may be missing logs in Discord if the logging queue was not emptied.")
         sys.exit(0)
     except Exception as e:
-        logger.error("-" * 36)
-        logger.error("ERROR: An unexpected error occurred:")
-        logger.error("-" * 36)
-        logger.error(str(e))
+        logger.critical("An unexpected error occurred!")
+        logger.error(f"Error details: {str(e)}")
 
         if config.debug_mode:
-            logger.error("-" * 36)
-            logger.error("DEBUG TRACEBACK:")
-            logger.error("-" * 36)
+            logger.error("Full traceback:")
             traceback.print_exception(type(e), e, e.__traceback__)
 
         sys.exit(1)

@@ -73,24 +73,32 @@ def send_webhook(
         "username": username if username is not None else ""
     }
 
+    logger.debug(f"Sending Discord webhook to: {webhook_url[:30]}...")
+
     # Send the webhook
     try:
         response = requests.post(webhook_url, json=json_data)
 
         if response.status_code == 429:
+            logger.warning("Discord rate limit hit, retrying after delay...")
             default_retry = 1.5
 
             try:
-                time.sleep(dict(response.json()).get("retry_after", default_retry))
+                retry_after = dict(response.json()).get("retry_after", default_retry)
+                logger.debug(f"Rate limit retry delay: {retry_after}s")
+                time.sleep(retry_after)
                 response = requests.post(webhook_url, json=json_data)
             except ValueError:
+                logger.debug(f"Using default retry delay: {default_retry}s")
                 time.sleep(default_retry)
                 response = requests.post(webhook_url, json=json_data)
 
         if response.status_code not in [200, 204]:
-            logger.error(f"Failed to send webhook. Status code: {response.status_code}. Response: {response.text}")
-    except requests.exceptions.RequestException as e:
-        if raise_exception_instead_of_print:
-            raise Exception(f"Error sending webhook: {e}")
+            logger.error(f"Webhook failed with status {response.status_code}: {response.text}")
         else:
-            logger.error(f"Error sending webhook: {e}")
+            logger.debug("Discord webhook sent successfully")
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Error sending webhook: {e}"
+        logger.error(error_msg)
+        if raise_exception_instead_of_print:
+            raise Exception(error_msg)

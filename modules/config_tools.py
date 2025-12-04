@@ -31,6 +31,7 @@ class Config:
     send_test_webhooks: bool
 
     logger_webhook: str
+    logger_webhook_ping: str
 
     reddit_id: str
     reddit_secret: str
