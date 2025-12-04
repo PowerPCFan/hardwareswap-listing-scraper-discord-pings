@@ -1,11 +1,11 @@
-import kroma
+from .logger import logger
 import praw
 from praw.models import Subreddit, Submission, Redditor  # noqa: F401
 from .configuration import config
 
 
 def initialize() -> Subreddit:
-    print(f"{kroma.style(text='Connecting to Reddit...', foreground=kroma.ANSIColors.BLUE)}")
+    logger.info("Connecting to Reddit...")
 
     reddit = praw.Reddit(
         client_id=config.reddit_id,
@@ -15,6 +15,6 @@ def initialize() -> Subreddit:
 
     subreddit = reddit.subreddit("hardwareswap")
 
-    print(f"{kroma.style(text='Connected successfully.', foreground=kroma.ANSIColors.GREEN)}")
+    logger.info("Connected successfully.")
 
     return subreddit

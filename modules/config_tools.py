@@ -1,6 +1,5 @@
 import json
 import os
-import kroma
 from dataclasses import dataclass
 
 CONFIG_JSON = "config.json"
@@ -31,6 +30,8 @@ class Config:
     parse_imgur_links: bool
     send_test_webhooks: bool
 
+    logger_webhook: str
+
     reddit_id: str
     reddit_secret: str
     reddit_username: str
@@ -43,9 +44,7 @@ class Config:
     @staticmethod
     def load() -> "Config":
         if not os.path.exists(CONFIG_JSON):
-            raise FileNotFoundError(
-                kroma.style(text=f"Error: {CONFIG_JSON} not found.", foreground=kroma.ANSIColors.RED)
-            )
+            raise FileNotFoundError(f"Error: {CONFIG_JSON} not found.")
 
         with open(CONFIG_JSON) as f:
             data = json.load(f)

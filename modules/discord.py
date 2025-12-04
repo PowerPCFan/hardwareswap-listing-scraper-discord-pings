@@ -1,5 +1,5 @@
 import requests
-import kroma
+from .logger import logger
 import time
 from .imgur import get_primary_image_from_reddit_post
 
@@ -88,12 +88,9 @@ def send_webhook(
                 response = requests.post(webhook_url, json=json_data)
 
         if response.status_code not in [200, 204]:
-            print(kroma.style(
-                f"Failed to send webhook. Status code: {response.status_code}. Response: {response.text}",
-                foreground=kroma.ANSIColors.RED
-            ))
+            logger.error(f"Failed to send webhook. Status code: {response.status_code}. Response: {response.text}")
     except requests.exceptions.RequestException as e:
         if raise_exception_instead_of_print:
             raise Exception(f"Error sending webhook: {e}")
         else:
-            print(kroma.style(f"Error sending webhook: {e}", foreground=kroma.ANSIColors.RED))
+            logger.error(f"Error sending webhook: {e}")

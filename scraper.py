@@ -2,7 +2,7 @@
 
 import sys
 import traceback
-import kroma
+from modules.logger import logger
 import modules.welcome as welcome
 import modules.reddit as reddit
 import modules.modes as modes
@@ -17,7 +17,7 @@ def main() -> None:
     # if send_test_webhooks is enabled, test every webhook
     # will raise exception if one webhook fails so then it will be caught in the main handler
     if config.send_test_webhooks:
-        print(kroma.style(text="\nTesting webhooks...", foreground=kroma.ANSIColors.BLUE))
+        logger.info("Testing webhooks...")
 
         for webhook_url, category_name in (
             [(config.all_listings_webhook, "All Listings")] +
@@ -31,7 +31,7 @@ def main() -> None:
                 raise_exception_instead_of_print=config.debug_mode
             )
 
-        print(kroma.style(text="All webhooks tested successfully.", foreground=kroma.ANSIColors.GREEN))
+        logger.info("All webhooks tested successfully.")
 
     # print welcome text (splash text and config summary)
     welcome.print_welcome_text()
@@ -44,20 +44,18 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(kroma.style(text="\nExiting...", foreground=kroma.ANSIColors.YELLOW))
+        logger.warning("Exiting...")
         sys.exit(0)
     except Exception as e:
-        print(
-            f"{'-' * 36}\n"
-            f"{kroma.style(text='ERROR: An unexpected error occurred:', foreground=kroma.ANSIColors.RED)}\n"
-            f"{'-' * 36}\n"
-            f"{str(e)}"
-        )
+        logger.error("-" * 36)
+        logger.error("ERROR: An unexpected error occurred:")
+        logger.error("-" * 36)
+        logger.error(str(e))
 
         if config.debug_mode:
-            print("-" * 36)
-            print(kroma.style(text="DEBUG TRACEBACK:", foreground=kroma.ANSIColors.RED))
-            print("-" * 36)
+            logger.error("-" * 36)
+            logger.error("DEBUG TRACEBACK:")
+            logger.error("-" * 36)
             traceback.print_exception(type(e), e, e.__traceback__)
 
         sys.exit(1)

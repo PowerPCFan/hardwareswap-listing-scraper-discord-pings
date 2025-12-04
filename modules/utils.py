@@ -1,9 +1,9 @@
 import time
+import kroma
 import re as regexp
 from . import reddit
 from . import discord
 from .configuration import config
-import kroma
 from datetime import datetime
 
 
