@@ -3,3 +3,5 @@
 - simplify terminal output since this is webhook oriented not "display everything in terminal/push notifs" oriented like the upstream PowerPCFan/hardwareswap-listing-scraper project
 - I have to figure out a way to reduce false positives but maybe that's as simple as adding a global blocklist for certain words and then an allowlist/blocklist override if they need to be allowed in certain categories
 - Improve debug mode so I can test without pinging real users in production
+- fix crashing issue where the error was literally just "0"
+- figure out a way to make sure logging webhook queue fully empties even if the app crashes or is terminated, so I can see the last logs and/or crash reason in discord without having to SSH and check tmux terminal history
