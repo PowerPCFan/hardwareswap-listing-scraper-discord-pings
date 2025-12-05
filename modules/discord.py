@@ -2,6 +2,7 @@ import requests
 from .logger import logger
 import time
 from .imgur import get_primary_image_from_reddit_post
+from .price import get_prices_from_reddit_post
 
 
 def create_embed(
@@ -55,6 +56,20 @@ def create_embed(
     primary_image = get_primary_image_from_reddit_post(post_body)
     if primary_image:
         embed["image"] = {"url": primary_image}
+
+    # this is so messy lmao
+    prices = get_prices_from_reddit_post(post_body)
+    if prices:
+        fields = embed.get("fields", None)
+        if fields:
+            fields = list(fields)
+            if prices.price_string and len(prices.prices) > 0:
+                fields.insert(-1, {
+                    "name": "Prices:" if len(prices.prices) > 1 else "Price:",
+                    "value": prices.price_string,
+                    "inline": False
+                })
+                embed["fields"] = fields
 
     return embed
 
