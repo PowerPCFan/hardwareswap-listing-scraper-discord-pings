@@ -9,6 +9,5 @@
     - not_h / not_w
     - instead of filtering for like "3600" filter for "DDR4-3600", "3600 MHz", "3600MHz", "3600 MT/s", "3600MT/s"
 - Improve debug mode so I can test without pinging real users in production
-- fix crashing issue where the error was literally just "0" (HIGH PRIORITY this keeps happening)
 - fix logging date format and timezone
 - figure out a way to make sure logging webhook queue fully empties even if the app crashes or is terminated, so I can see the last logs and/or crash reason in discord without having to SSH and check tmux terminal history

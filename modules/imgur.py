@@ -2,6 +2,7 @@ import requests
 import re as regexp
 import random
 import time
+from typing import Any
 from .configuration import config
 
 
@@ -19,31 +20,37 @@ def grab_direct_links(album_url: str) -> list[str] | None:
     resp = requests.post(
         url="https://imgur.plen.io/api/trpc/imgur.getLinks?batch=1",
         headers=headers,
-        json={"0": {
-            "json": {
-                "url": album_url,
-            },
-        }},
+        json={
+            "0": {
+                "json": {
+                    "url": album_url,
+                },
+            }
+        },
     )
 
-    data = resp.json()
-
-    if data and len(data) > 0 and "error" in data[0]:
-        return None
+    data: dict = resp.json()
 
     if not data or len(data) == 0:
         return None
 
-    if "result" not in data[0]:
+    first_item: Any = data[0] if isinstance(data, list) else data
+
+    if "error" in first_item:
         return None
 
-    if "data" not in data[0]["result"]:
+    result: dict[str, Any] | None = first_item.get("result")
+    if not result:
         return None
 
-    if "json" not in data[0]["result"]["data"]:
+    result_data: dict[str, Any] | None = result.get("data")
+    if not result_data:
         return None
 
-    link_string: str = data[0]["result"]["data"]["json"]
+    link_string: str | None = result_data.get("json")
+    if not link_string:
+        return None
+
     links: list[str] = link_string.split("\n")
 
     for link in links:
@@ -56,7 +63,7 @@ def grab_direct_links(album_url: str) -> list[str] | None:
 def get_primary_image_from_album(album_url: str) -> str | None:
     links = grab_direct_links(album_url)
 
-    if not links or not links[0]:
+    if not links or len(links) == 0:
         return None
 
     return links[0]
@@ -64,7 +71,7 @@ def get_primary_image_from_album(album_url: str) -> str | None:
 
 def extract_imgur_links_from_post(post_body: str) -> list[str]:
     pattern = r"https?:\/\/(?:www\.)?imgur\.com\/(?:a|gallery)\/[A-Za-z0-9_-]+"
-    matches = regexp.findall(pattern=pattern, string=post_body)
+    matches: list[str] = regexp.findall(pattern=pattern, string=post_body)
     if not matches:
         return []
 
@@ -77,16 +84,16 @@ def get_primary_image_from_reddit_post(post_body: str) -> str | None:
     if not config.parse_imgur_links:
         return None
 
-    if not album_url or not album_url[0]:
+    if not album_url or len(album_url) == 0:
         # return default image
         return None
 
     links = grab_direct_links(album_url[0])
 
-    if not links or not links[0]:
+    if not links or len(links) == 0:
         return None
 
-    # Sleep before returning since this API isn't meant to be public so it has weird rate limiting issues
+    # Sleep 1-3 secs before returning since this API isn't meant to be public so it has weird rate limiting issues
     time.sleep(random.uniform(1, 3))
 
     return links[0]
