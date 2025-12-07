@@ -42,6 +42,7 @@ def main() -> None:
     logger.info("HardwareSwap Listing Scraper (Discord Pings Edition) starting...")
     logger.info(f"Reddit Username: u/{config.reddit_username}")
     logger.info(f"Debug Mode: {config.debug_mode}")
+    logger.info(f"Full Tracebacks: {config.full_tracebacks}")
     logger.info(f"Parse Body: {config.parse_body}")
     logger.info(f"Parse Imgur Links: {config.parse_imgur_links}")
     logger.info(f"Send Test Webhooks: {config.send_test_webhooks}")
