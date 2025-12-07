@@ -64,7 +64,7 @@ if __name__ == "__main__":
         logger.critical("An unexpected error occurred!")
         logger.error(f"Error details: {str(e)}")
 
-        if config.debug_mode:
+        if config.full_tracebacks:
             logger.error("Full traceback:")
             traceback.print_exception(type(e), e, e.__traceback__)
 

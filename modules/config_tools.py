@@ -26,6 +26,7 @@ class PingConfig:
 @dataclass
 class Config:
     debug_mode: bool
+    full_tracebacks: bool
     parse_body: bool
     parse_imgur_links: bool
     send_test_webhooks: bool
