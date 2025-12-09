@@ -3,3 +3,4 @@
 - figure out a way to make sure logging webhook queue fully empties even if the app crashes or is terminated, so I can see the last logs and/or crash reason in discord without having to SSH and check tmux terminal history
 - add a delay before sending posts so i can do a check if the post was deleted by automod and if it was, skip sending it to the ping webhooks
 - figure out how to get around posts like this: https://www.reddit.com/r/hardwareswap/comments/1phu4mm/usatx_h_ddr5_gskill_32gb16x2_old_gaming_laptop_w/ not displaying when a word like "laptop" is blacklisted, even though it matches DDR5 RAM category. i cant just remove the blacklist because i need it for posts like "gaming laptop 1tb ssd 16gb ddr5 ryzen 5 5600" etc which shouldnt match the specific categories since its a laptop.
+- add more markdown stripping for tables: https://discord.com/channels/1444776915880775803/1444779357531934761/1447832461466800168
