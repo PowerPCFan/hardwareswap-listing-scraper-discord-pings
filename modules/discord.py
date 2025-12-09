@@ -1,6 +1,7 @@
 import requests
-from .logger import logger
 import time
+import re as regexp
+from .logger import logger
 from .imgur import get_primary_image_from_reddit_post
 from .price import get_prices_from_reddit_post
 
@@ -9,6 +10,32 @@ def create_embed(
     url: str, author: str, trades: str, have: str, want: str,
     joined: str, post_karma: str, comment_karma: str, date_posted: str, post_body: str
 ) -> dict:
+    post_body_value_field = ""
+    max_embed_field_length = 1024
+
+    # turn post body into markdown blockquote
+    for line in post_body.split("\n"):
+        line = "> " + line
+        post_body_value_field += line + "\n"
+
+    # strip some markdown like headings (use regex to ensure the # is at the start of the line)
+    post_body_value_field = regexp.sub(r"^(?:\s*>)*\s*#{1,6}\s*", "> ", post_body_value_field, flags=regexp.MULTILINE)
+
+    # Converts something like [https://google.com](https://google.com) to just https://google.com,
+    # since Discord doesn't display links with a URL as display text (even if it's the same url) to avoid phishing.
+    # Doesn't touch links like [Google](https://google.com) since those are valid in Discord.
+    post_body_value_field = regexp.sub(r'\[([^\]]+)\]\(\1\)', r'\1', post_body_value_field, flags=regexp.MULTILINE)
+
+    # truncate if too long
+    if len(post_body_value_field) > max_embed_field_length:
+        truncation_text = "... (view full post content on Reddit)"
+        length = max_embed_field_length - len(truncation_text)
+        post_body_value_field = post_body_value_field[:length] + truncation_text
+
+        # silly goobery thingy
+        if post_body_value_field.endswith("\n> "):
+            post_body_value_field = post_body_value_field[:-3] + "\n" + truncation_text
+        post_body_value_field = post_body_value_field.replace(f"> {truncation_text}", truncation_text)
 
     embed = {
         "title": f"A new listing by u/{author} has been posted on r/HardwareSwap!",
@@ -19,7 +46,7 @@ def create_embed(
             {
                 "name": "User:",
                 "value": f"[u/{author}](https://www.reddit.com/user/{author})",
-                "inline": True
+                "inline": False
             },
             {
                 "name": "User Info:",
@@ -45,7 +72,12 @@ def create_embed(
             {
                 "name": "Date Posted:",
                 "value": date_posted,
-                "inline": True
+                "inline": False
+            },
+            {
+                "name": "Post Content:",
+                "value": post_body_value_field,
+                "inline": False
             }
         ],
         "thumbnail": {
@@ -64,7 +96,7 @@ def create_embed(
         if fields:
             fields = list(fields)
             if prices.price_string and len(prices.prices) > 0:
-                fields.insert(-1, {
+                fields.insert(-2, {
                     "name": "Prices:" if len(prices.prices) > 1 else "Price:",
                     "value": prices.price_string,
                     "inline": False

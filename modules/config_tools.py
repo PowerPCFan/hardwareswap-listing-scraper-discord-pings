@@ -22,6 +22,8 @@ class PingConfig:
     webhook: str
     role: int
 
+    blocklist_override: list[str]
+
 
 @dataclass
 class Config:
@@ -32,16 +34,19 @@ class Config:
     send_test_webhooks: bool
 
     logger_webhook: str
-    logger_webhook_ping: str
 
     reddit_id: str
     reddit_secret: str
     reddit_username: str
 
-    all_listings_webhook: str
-    all_listings_role: int
-
     pings: list[PingConfig]
+
+    global_blocklist: list[str]
+
+    logger_webhook_ping: int | None = None
+
+    all_listings_webhook: str | None = None
+    all_listings_role: int | None = None
 
     @staticmethod
     def load() -> "Config":

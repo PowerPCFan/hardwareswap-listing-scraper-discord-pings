@@ -175,7 +175,8 @@ class DiscordWebhookHandler(logging.Handler):
                 ping_content = f"{self.ping_webhook} "
 
             content = (
-                f"{ping_content}```\n"
+                f"{ping_content}\n"
+                f"```\n"
                 f"[ {level_name} ]    {message}    [{asctime} ({record.filename}:{record.funcName})]\n"
                 f"```"
             )
@@ -209,7 +210,7 @@ def _has_discord_handler(logr) -> bool:
 
 if config.logger_webhook and not _has_discord_handler(logger):
     try:
-        discord_handler = DiscordWebhookHandler(config.logger_webhook, f"<@{str(config.logger_webhook_ping)}>")
+        discord_handler = DiscordWebhookHandler(config.logger_webhook, f"<@{str(config.logger_webhook_ping)}>" if config.logger_webhook_ping else None)  # noqa: E501
         discord_handler.setLevel(logging.DEBUG)
         logger.addHandler(discord_handler)
     except Exception:

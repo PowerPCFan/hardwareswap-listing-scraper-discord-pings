@@ -6,6 +6,48 @@ from .logger import logger
 from .configuration import config
 from datetime import datetime
 
+regex_prefix = 'regexp::'
+
+
+def matches_pattern(text: str, pattern: str) -> bool:
+    text_lower = text.lower()
+
+    if pattern.startswith(regex_prefix):
+        length = len(regex_prefix)
+        regex_pattern = pattern[length:]
+        try:
+            return bool(regexp.search(regex_pattern, text_lower, regexp.IGNORECASE))
+        except regexp.error:
+            return regex_pattern.lower() in text_lower
+    else:
+        return pattern.lower() in text_lower
+
+
+def is_globally_blocked(h: str, w: str, title_only_h: str) -> bool:
+    if not config.global_blocklist:
+        return False
+
+    content_to_check = f"{h} {w} {title_only_h}".lower()
+
+    for blocked_pattern in config.global_blocklist:
+        if matches_pattern(content_to_check, blocked_pattern):
+            return True
+
+    return False
+
+
+def matches_blocklist_override(h: str, w: str, title_only_h: str, override_patterns: list[str]) -> bool:
+    if not override_patterns:
+        return False
+
+    content_to_check = f"{h} {w} {title_only_h}".lower()
+
+    for override_pattern in override_patterns:
+        if matches_pattern(content_to_check, override_pattern):
+            return True
+
+    return False
+
 
 def reddit_timestamp_creator(unix_epoch: float) -> str:
     # Convert to local datetime object

@@ -26,6 +26,9 @@ def main() -> None:
             [(config.all_listings_webhook, "All Listings")] +
             [(ping.webhook, ping.category_name) for ping in config.pings]
         ):
+            if not webhook_url:
+                continue
+
             logger.debug(f"Testing webhook for category: {category_name}")
             discord.send_webhook(
                 webhook_url=webhook_url,
@@ -47,6 +50,7 @@ def main() -> None:
     logger.info(f"Parse Imgur Links: {config.parse_imgur_links}")
     logger.info(f"Send Test Webhooks: {config.send_test_webhooks}")
     logger.info(f"Configured {len(config.pings)} ping categories")
+    logger.info(f"Configured global blocklist with {len(config.global_blocklist)} patterns")
     logger.info("Press Ctrl+C to exit")
     logger.newline()
 

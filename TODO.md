@@ -1,13 +1,5 @@
-- test body parsing
-- test not_h and not_w filters
 - simplify terminal output since this is webhook oriented not "display everything in terminal/push notifs" oriented like the upstream PowerPCFan/hardwareswap-listing-scraper project
-- I have to figure out a way to reduce false positives but maybe that's as simple as adding a global blocklist for certain words and then an allowlist/blocklist override if they need to be allowed in certain categories
-  - related: add regex matching, maybe use a prefix in the h/w fields like `regexp::`
-  - related: fix cpu/gpu being parsed as ram speeds, with one of these:
-    - regex
-    - blocklist/whitelist system
-    - not_h / not_w
-    - instead of filtering for like "3600" filter for "DDR4-3600", "3600 MHz", "3600MHz", "3600 MT/s", "3600MT/s"
-- Improve debug mode so I can test without pinging real users in production
 - fix logging date format and timezone
 - figure out a way to make sure logging webhook queue fully empties even if the app crashes or is terminated, so I can see the last logs and/or crash reason in discord without having to SSH and check tmux terminal history
+- add a delay before sending posts so i can do a check if the post was deleted by automod and if it was, skip sending it to the ping webhooks
+- figure out how to get around posts like this: https://www.reddit.com/r/hardwareswap/comments/1phu4mm/usatx_h_ddr5_gskill_32gb16x2_old_gaming_laptop_w/ not displaying when a word like "laptop" is blacklisted, even though it matches DDR5 RAM category. i cant just remove the blacklist because i need it for posts like "gaming laptop 1tb ssd 16gb ddr5 ryzen 5 5600" etc which shouldnt match the specific categories since its a laptop.

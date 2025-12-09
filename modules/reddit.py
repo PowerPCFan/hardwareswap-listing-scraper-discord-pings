@@ -11,7 +11,7 @@ def initialize() -> Subreddit:
     reddit = praw.Reddit(
         client_id=config.reddit_id,
         client_secret=config.reddit_secret,
-        user_agent=f"script:hardwareswap-listing-scraper (by u/{config.reddit_username})"
+        user_agent=f"script:hardwareswap-listing-scraper-discord-pings-edition (by u/{config.reddit_username})"
     )
 
     logger.debug("Reddit instance created successfully")
