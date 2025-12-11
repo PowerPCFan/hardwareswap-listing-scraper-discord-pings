@@ -6,11 +6,8 @@ from .configuration import config
 from . import webhook_sender
 
 _discord_webhook_send_count = 0
-
-try:
-    LOGGER_DISCORD_WEBHOOK_URL = config.logger_webhook
-except AttributeError:
-    LOGGER_DISCORD_WEBHOOK_URL = None
+setLevelValue = logging.DEBUG if config.debug_mode else logging.INFO
+LOGGER_DISCORD_WEBHOOK_URL = config.logger_webhook
 
 ANSI = "\033["
 RESET = f"{ANSI}0m"
@@ -66,7 +63,8 @@ class CustomLogger:
         self.base_logger: logging.Logger = base_logger
 
     def debug(self, msg, *args, **kwargs):
-        return self.base_logger.debug(msg, *args, **kwargs)
+        if config.debug_mode:
+            return self.base_logger.debug(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
         return self.base_logger.info(msg, *args, **kwargs)
@@ -124,6 +122,7 @@ _base_logger.setLevel(logging.DEBUG)
 
 handler = logging.StreamHandler()
 handler.setFormatter(fmt)
+handler.setLevel(setLevelValue)
 _base_logger.addHandler(handler)
 
 logger = CustomLogger(_base_logger)
@@ -165,6 +164,9 @@ class DiscordWebhookHandler(logging.Handler):
                 print(f"[ ERROR ] Discord webhook worker error: {e}")
 
     def emit(self, record: logging.LogRecord) -> None:
+        if record.levelno == logging.DEBUG and not config.debug_mode:
+            return
+
         try:
             level_name = logging.getLevelName(record.levelno)
             asctime = time.strftime("%y/%m/%d %H:%M:%S", time.localtime(record.created))
@@ -211,7 +213,7 @@ def _has_discord_handler(logr) -> bool:
 if config.logger_webhook and not _has_discord_handler(logger):
     try:
         discord_handler = DiscordWebhookHandler(config.logger_webhook, f"<@{str(config.logger_webhook_ping)}>" if config.logger_webhook_ping else None)  # noqa: E501
-        discord_handler.setLevel(logging.DEBUG)
+        discord_handler.setLevel(setLevelValue)
         logger.addHandler(discord_handler)
     except Exception:
         logger.error("Failed to add Discord webhook handler to logger!")

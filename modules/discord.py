@@ -2,13 +2,21 @@ import requests
 import time
 import re as regexp
 from .logger import logger
-from .imgur import get_primary_image_from_reddit_post
+from .imgur import get_image_for_embed
 from .price import get_prices_from_reddit_post
 
 
 def create_embed(
-    url: str, author: str, trades: str, have: str, want: str,
-    joined: str, post_karma: str, comment_karma: str, date_posted: str, post_body: str
+    url: str,
+    author: str,
+    trades: str,
+    have: str,
+    want: str,
+    joined: str,
+    post_karma: str,
+    comment_karma: str,
+    date_posted: str,
+    post_body: str
 ) -> dict:
     post_body_value_field = ""
     max_embed_field_length = 1024
@@ -24,7 +32,7 @@ def create_embed(
     # Converts something like [https://google.com](https://google.com) to just https://google.com,
     # since Discord doesn't display links with a URL as display text (even if it's the same url) to avoid phishing.
     # Doesn't touch links like [Google](https://google.com) since those are valid in Discord.
-    post_body_value_field = regexp.sub(r'\[([^\]]+)\]\(\1\)', r'\1', post_body_value_field, flags=regexp.MULTILINE)
+    post_body_value_field = regexp.sub(r"\[([^\]]+)\]\(\1\)", r"\1", post_body_value_field, flags=regexp.MULTILINE)
 
     # truncate if too long
     if len(post_body_value_field) > max_embed_field_length:
@@ -85,9 +93,9 @@ def create_embed(
         },
     }
 
-    primary_image = get_primary_image_from_reddit_post(post_body)
-    if primary_image:
-        embed["image"] = {"url": primary_image}
+    image = get_image_for_embed(post_body)
+    if image:
+        embed["image"] = {"url": image}
 
     # this is so messy lmao
     prices = get_prices_from_reddit_post(post_body)
@@ -120,7 +128,7 @@ def send_webhook(
         "username": username if username is not None else ""
     }
 
-    logger.debug(f"Sending Discord webhook to: {webhook_url[:30]}...")
+    logger.debug(f"Sending Discord webhook to: {webhook_url}...")
 
     # Send the webhook
     try:

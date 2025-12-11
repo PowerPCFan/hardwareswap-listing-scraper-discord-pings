@@ -6,10 +6,8 @@ from .logger import logger
 from .configuration import config
 from datetime import datetime
 
-regex_prefix = 'regexp::'
 
-
-def matches_pattern(text: str, pattern: str) -> bool:
+def matches_pattern(text: str, pattern: str, regex_prefix: str = 'regexp::') -> bool:
     text_lower = text.lower()
 
     if pattern.startswith(regex_prefix):
@@ -70,6 +68,7 @@ def reddit_account_age_timestamp_generator(unix_epoch) -> str:
     return time.strftime("%B %d, %Y", time.localtime(unix_epoch))
 
 
+# this code is messy and terrible but it works perfectly
 def get_trades_number(flair: str) -> str:
     if isinstance(flair, str) and flair and flair.startswith("Trades: "):
         trades = flair.removeprefix("Trades: ").strip().lower()

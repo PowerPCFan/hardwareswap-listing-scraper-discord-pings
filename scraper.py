@@ -49,6 +49,7 @@ def main() -> None:
     logger.info(f"Parse Body: {config.parse_body}")
     logger.info(f"Parse Imgur Links: {config.parse_imgur_links}")
     logger.info(f"Send Test Webhooks: {config.send_test_webhooks}")
+    logger.info(f"Combine Images: {config.combine_images}")
     logger.info(f"Configured {len(config.pings)} ping categories")
     logger.info(f"Configured global blocklist with {len(config.global_blocklist)} patterns")
     logger.info("Press Ctrl+C to exit")

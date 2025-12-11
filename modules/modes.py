@@ -16,11 +16,12 @@ def match(subreddit: reddit.Subreddit) -> None:
         url = submission.url
         flair_text = submission.author_flair_text
 
-        if None in [title, body, author, utc_date, url, flair_text]:
+        logger.debug(f"Processing new submission: {url}")
+
+        # note: flair not included bc sometimes users have no flair instead of the default "Trades: None" or whatever
+        if None in [title, body, author, utc_date, url]:
             logger.warning(f"Skipping submission with missing data: {submission.url or f'unknown URL, id: {submission.id or 'unknown id'}'}")  # type: ignore  # noqa: E501
             continue
-
-        logger.debug(f"Processing new submission: {url}")
 
         h, w, title_only_h = parse_have_want(
             title=title,

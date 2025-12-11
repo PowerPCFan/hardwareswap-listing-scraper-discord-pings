@@ -32,6 +32,9 @@ class Config:
     parse_body: bool
     parse_imgur_links: bool
     send_test_webhooks: bool
+    combine_images: bool
+
+    cdn_exploit_webhook: str
 
     logger_webhook: str
 
