@@ -33,6 +33,7 @@ class Config:
     parse_imgur_links: bool
     send_test_webhooks: bool
     combine_images: bool
+    ping_for_warnings: bool
 
     cdn_exploit_webhook: str
 

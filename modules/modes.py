@@ -1,3 +1,4 @@
+import time
 from . import reddit
 from .configuration import config
 from .utils import parse_have_want, print_new_post, matches_pattern, is_globally_blocked, matches_blocklist_override
@@ -21,6 +22,11 @@ def match(subreddit: reddit.Subreddit) -> None:
         # note: flair not included bc sometimes users have no flair instead of the default "Trades: None" or whatever
         if None in [title, body, author, utc_date, url]:
             logger.warning(f"Skipping submission with missing data: {submission.url or f'unknown URL, id: {submission.id or 'unknown id'}'}")  # type: ignore  # noqa: E501
+            continue
+
+        # if the post is older than 10 minutes, skip it
+        if (time.time() - utc_date > 600) and not config.debug_mode:
+            logger.error(f"Old submission was mistakenly retrieved: {url}. Skipping.")
             continue
 
         h, w, title_only_h = parse_have_want(

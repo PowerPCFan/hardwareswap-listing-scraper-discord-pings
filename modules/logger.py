@@ -179,8 +179,13 @@ class DiscordWebhookHandler(logging.Handler):
             message = record.getMessage()
 
             ping_content = ""
-            if self.ping_webhook and record.levelno >= logging.WARNING:
-                ping_content = f"{self.ping_webhook} "
+
+            if config.ping_for_warnings:
+                if self.ping_webhook and record.levelno >= logging.WARNING:
+                    ping_content = f"{self.ping_webhook} "
+            else:
+                if self.ping_webhook and record.levelno >= logging.ERROR:
+                    ping_content = f"{self.ping_webhook} "
 
             content = (
                 f"{ping_content}\n"
