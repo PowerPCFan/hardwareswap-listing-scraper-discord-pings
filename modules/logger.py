@@ -2,6 +2,7 @@ import logging
 import time
 import queue
 import threading
+from datetime import datetime, timezone, timedelta
 from .configuration import config
 from . import webhook_sender
 
@@ -27,6 +28,7 @@ class Logger(logging.Formatter):
     def __init__(self):
         super().__init__()
         self._format = "[ %(levelname)s ]    %(message)s    [%(asctime)s (%(filename)s:%(funcName)s)]"
+        self.utc_minus_5 = timezone(timedelta(hours=-5))
 
         self.FORMATS = {
             logging.DEBUG: self._format,
@@ -35,6 +37,9 @@ class Logger(logging.Formatter):
             logging.ERROR: self._format,
             logging.CRITICAL: self._format,
         }
+
+    def formatTime(self, record, datefmt=None):
+        return datetime.fromtimestamp(record.created, tz=self.utc_minus_5).strftime("%m/%d/%Y %H:%M:%S")
 
     def format(self, record: logging.LogRecord) -> str:
         record.levelname = record.levelname.center(8)
@@ -51,7 +56,8 @@ class Logger(logging.Formatter):
 
         log_fmt = self.FORMATS.get(record.levelno)
 
-        formatter = logging.Formatter(log_fmt, datefmt="%y/%m/%d %H:%M:%S")
+        formatter = logging.Formatter(log_fmt)
+        formatter.formatTime = self.formatTime
         return formatter.format(record)
 
 

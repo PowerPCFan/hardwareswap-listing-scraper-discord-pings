@@ -112,7 +112,8 @@ def print_new_post(
     j, pk, ck = get_karma_string(author)  # use the full author var because the function needs the entire author object
     trades = get_trades_number(flair)
 
-    date_posted = reddit_timestamp_creator(utc_date)
+    # date_posted = reddit_timestamp_creator(utc_date)
+    date_posted = f"<t:{str(int(utc_date))}:f>"
 
     webhook_type = "all listings" if is_all_listings_webhook else f"category '{category_name}'"
     logger.debug(f"Sending webhook for {webhook_type} to Discord")
