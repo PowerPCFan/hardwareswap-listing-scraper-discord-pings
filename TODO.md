@@ -5,6 +5,7 @@
 - add a delay before sending posts so i can do a check if the post was deleted by automod and if it was, skip sending it to the ping webhooks
 - find a way to convert tables like this https://discord.com/channels/1444776915880775803/1444779357531934761/1447832461466800168 to plaintext that's still readable
 - https://discord.com/channels/1205677964130258944/1232855579010138162/1448837052656517191
-- fix issue that combined images are regenerated per webhook sent
-- figure out why old posts are sometimes being retrieved even if debug mode is off
+- fix issue that combined images are regenerated per webhook sent (maybe generate before running print_new_post for each matching category and then pass through the image path as a print_new_post argument)
+- figure out why old posts are sometimes being retrieved even if debug mode and therefore retrieve old posts or whatever its called is off
+  - Note: possibly band-aid fixed with the recent addition of skipping posts older than 10 minutes
   - possibly related to the issue causing the above problem, its just really buggy rn, for example https://discord.com/channels/1444776915880775803/1444779527497711749/1448873848983257291 didnt go to ddr4 and ddr5 channels when it should have, and it posted twice
