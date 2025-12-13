@@ -1,4 +1,3 @@
-- fix logging date format and timezone, and post timezone - maybe use discord timestamps to adjust to user timestamp
 - figure out a way to make sure logging webhook queue fully empties even if the app crashes or is terminated, so I can see the last logs and/or crash reason in discord without having to SSH and check tmux terminal history
   - logging to a file is probably more feasible than this
   - also, the discord logs are cool but realistically do i need a webhook sending every log? idk i could probably remove it
