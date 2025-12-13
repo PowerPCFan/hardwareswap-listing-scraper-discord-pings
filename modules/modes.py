@@ -34,7 +34,7 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
 
         if config.check_if_post_was_deleted:
             time.sleep(10)  # allow 10 seconds for automod to delete the post
-            refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id, url=submission.url)
+            refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id)
             if refresh_post.removed_by_category:
                 logger.warning(f"Submission {url} was removed. Skipping.")
                 continue
