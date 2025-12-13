@@ -9,4 +9,5 @@
 - figure out why old posts are sometimes being retrieved even if debug mode and therefore retrieve old posts or whatever its called is off
   - Note: possibly band-aid fixed with the recent addition of skipping posts older than 10 minutes
     - maybe the fix isnt necessary? https://www.reddit.com/r/hardwareswap/s/SvE7W5i5BE this posted right as the hwsbot comment posted, the bot and my script posted 5 hours late - maybe its a reddit API issue possibly related to the recent changes
+      - https://discord.com/channels/1444776915880775803/1446113571032272997/1449188302858092675 another example (well 37 of them) of this
   - possibly related to the issue causing the above problem, its just really buggy rn, for example https://discord.com/channels/1444776915880775803/1444779527497711749/1448873848983257291 didnt go to ddr4 and ddr5 channels when it should have, and it posted twice
