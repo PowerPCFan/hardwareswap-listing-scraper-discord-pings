@@ -7,3 +7,4 @@
       - https://discord.com/channels/1444776915880775803/1446113571032272997/1449188302858092675 another example (well 37 of them) of this
       - over 200 examples https://discord.com/channels/1444776915880775803/1446113571032272997/1449288015754035263
   - possibly related to the issue causing the above problem, its just really buggy rn, for example https://discord.com/channels/1444776915880775803/1444779527497711749/1448873848983257291 didnt go to ddr4 and ddr5 channels when it should have, and it posted twice
+- OK so new idea, either have it show posts no older than five hours ago or show all posts when they're received by the Reddit API, even if they are really outdated, but in order to make sure that they don't get double sent due to API glitches, store a list of namedtuples containing post ID/url and category posted in to avoid double posts
