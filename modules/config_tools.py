@@ -34,6 +34,7 @@ class Config:
     send_test_webhooks: bool
     combine_images: bool
     ping_for_warnings: bool
+    check_if_post_was_deleted: bool
 
     cdn_exploit_webhook: str
 

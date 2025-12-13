@@ -5,9 +5,9 @@ from .utils import parse_have_want, print_new_post, matches_pattern, is_globally
 from .logger import logger
 
 
-def match(subreddit: reddit.Subreddit) -> None:
+def match(initialize_response: reddit.InitializeResponse) -> None:
     logger.info("Starting to monitor for new submissions...")
-    post_stream = subreddit.stream.submissions(skip_existing=(not config.debug_mode))
+    post_stream = initialize_response.subreddit.stream.submissions(skip_existing=(not config.debug_mode))
 
     for submission in post_stream:
         title = submission.title
@@ -20,14 +20,22 @@ def match(subreddit: reddit.Subreddit) -> None:
         logger.debug(f"Processing new submission: {url}")
 
         # note: flair not included bc sometimes users have no flair instead of the default "Trades: None" or whatever
-        if None in [title, body, author, utc_date, url]:
-            logger.warning(f"Skipping submission with missing data: {submission.url or f'unknown URL, id: {submission.id or 'unknown id'}'}")  # type: ignore  # noqa: E501
+        # also didn't include url since it exists 99.99999% of the time
+        if None in [title, body, author, utc_date]:
+            logger.warning(f"Skipping submission with missing data: {submission.url or 'Unknown URL'}")
             continue
 
         # if the post is older than 10 minutes, skip it
         if (time.time() - utc_date > 600) and not config.debug_mode:
-            logger.error(f"Old submission was mistakenly retrieved: {url}. Skipping.")
+            logger.warning(f"Old submission was mistakenly retrieved: {url}. Skipping.")
             continue
+
+        if config.check_if_post_was_deleted:
+            time.sleep(10)  # allow 10 seconds for automod to delete the post
+            refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id, url=submission.url)
+            if refresh_post.removed_by_category:
+                logger.warning(f"Submission {url} was removed. Skipping.")
+                continue
 
         h, w, title_only_h = parse_have_want(
             title=title,
@@ -87,7 +95,8 @@ def match(subreddit: reddit.Subreddit) -> None:
 
         if len(matched_categories) > 1:
             categories_str = ", ".join(matched_categories)
-            logger.warning(
+            # logger.warning(
+            logger.info(
                 f"Post matches multiple categories which may result in false positives. "
                 f"URL: {url} | Categories: {categories_str}"
             )

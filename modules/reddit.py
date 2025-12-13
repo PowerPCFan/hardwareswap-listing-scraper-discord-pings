@@ -2,9 +2,15 @@ from .logger import logger
 import praw
 from praw.models import Subreddit, Submission, Redditor  # noqa: F401
 from .configuration import config
+from typing import NamedTuple
 
 
-def initialize() -> Subreddit:
+class InitializeResponse(NamedTuple):
+    reddit: praw.Reddit
+    subreddit: Subreddit
+
+
+def initialize() -> InitializeResponse:
     logger.info("Initializing Reddit API connection...")
     logger.debug(f"Using Reddit username: u/{config.reddit_username}")
 
@@ -18,4 +24,4 @@ def initialize() -> Subreddit:
     subreddit = reddit.subreddit("hardwareswap")
     logger.info("Successfully connected to r/hardwareswap")
 
-    return subreddit
+    return InitializeResponse(reddit=reddit, subreddit=subreddit)

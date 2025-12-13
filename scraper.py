@@ -14,7 +14,7 @@ def main() -> None:
 
     # init subreddit
     logger.debug("Connecting to Reddit API...")
-    subreddit = reddit.initialize()
+    initialize_response = reddit.initialize()
     logger.info("Successfully connected to Reddit")
 
     # if send_test_webhooks is enabled, test every webhook
@@ -50,6 +50,8 @@ def main() -> None:
     logger.info(f"Parse Imgur Links: {config.parse_imgur_links}")
     logger.info(f"Send Test Webhooks: {config.send_test_webhooks}")
     logger.info(f"Combine Images: {config.combine_images}")
+    logger.info(f"Ping for Warnings: {config.ping_for_warnings}")
+    logger.info(f"Check If Post Was Deleted: {config.check_if_post_was_deleted}")
     logger.info(f"Configured {len(config.pings)} ping categories")
     logger.info(f"Configured global blocklist with {len(config.global_blocklist)} patterns")
     logger.info("Press Ctrl+C to exit")
@@ -57,7 +59,7 @@ def main() -> None:
 
     # Start matching mode
     logger.info("Starting listing monitoring...")
-    modes.match(subreddit)
+    modes.match(initialize_response)
 
 
 if __name__ == "__main__":
