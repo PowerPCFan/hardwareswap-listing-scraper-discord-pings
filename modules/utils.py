@@ -5,6 +5,7 @@ from . import discord
 from .logger import logger
 from .configuration import config
 from datetime import datetime
+from .price import Price
 
 
 def matches_pattern(text: str, pattern: str, regex_prefix: str = 'regexp::') -> bool:
@@ -107,7 +108,8 @@ def parse_have_want(title: str, body: str | None = None, include_body: bool = Fa
 
 def print_new_post(
     author: reddit.Redditor, h: str, w: str, title_only_h: str, url: str, utc_date: float, flair: str,
-    webhook: str, role: int, post_body: str, category_name: str | None = None, is_all_listings_webhook: bool = False
+    webhook: str, role: int, post_body: str, image_url: str | None, prices: Price | None,
+    category_name: str | None = None, is_all_listings_webhook: bool = False
 ) -> None:
     j, pk, ck = get_karma_string(author)  # use the full author var because the function needs the entire author object
     trades = get_trades_number(flair)
@@ -132,7 +134,9 @@ def print_new_post(
             post_karma=pk,
             comment_karma=ck,
             date_posted=date_posted,
-            post_body=post_body
+            post_body=post_body,
+            image_url=image_url,
+            prices=prices
         ),
         raise_exception_instead_of_print=config.debug_mode
     )

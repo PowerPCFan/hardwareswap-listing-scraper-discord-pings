@@ -3,6 +3,8 @@ from . import reddit
 from .configuration import config
 from .utils import parse_have_want, print_new_post, matches_pattern, is_globally_blocked, matches_blocklist_override
 from .logger import logger
+from .imgur import get_image_for_embed
+from .price import get_prices_from_reddit_post
 
 
 def match(initialize_response: reddit.InitializeResponse) -> None:
@@ -45,7 +47,15 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
 
         logger.info(f"New post from u/{author.name}: {url}")
 
+        image_url = None
+        prices = None
+        img_and_prices_retrieved = False
+
         if config.all_listings_webhook and config.all_listings_role:
+            image_url = get_image_for_embed(body)
+            prices = get_prices_from_reddit_post(body)
+            img_and_prices_retrieved = True
+
             # Send to all listings webhook (always send regardless of global blocklist)
             print_new_post(
                 author=author,
@@ -59,6 +69,8 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
                 webhook=config.all_listings_webhook,
                 role=config.all_listings_role,
                 is_all_listings_webhook=True,
+                image_url=image_url,
+                prices=prices
             )
 
         matched_categories = []
@@ -79,6 +91,11 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
                     else:
                         logger.info(f"Post matches category: {ping_config.category_name}")
 
+                    if not img_and_prices_retrieved:
+                        image_url = get_image_for_embed(body)
+                        prices = get_prices_from_reddit_post(body)
+                        img_and_prices_retrieved = True
+
                     print_new_post(
                         author=author,
                         h=h,
@@ -91,6 +108,8 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
                         webhook=ping_config.webhook,
                         role=ping_config.role,
                         category_name=ping_config.category_name,
+                        image_url=image_url,
+                        prices=prices
                     )
 
         if len(matched_categories) > 1:

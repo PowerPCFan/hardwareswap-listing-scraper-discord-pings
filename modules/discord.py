@@ -2,8 +2,7 @@ import requests
 import time
 import re as regexp
 from .logger import logger
-from .imgur import get_image_for_embed
-from .price import get_prices_from_reddit_post
+from .price import Price
 
 
 def create_embed(
@@ -16,7 +15,9 @@ def create_embed(
     post_karma: str,
     comment_karma: str,
     date_posted: str,
-    post_body: str
+    post_body: str,
+    prices: Price | None,
+    image_url: str | None
 ) -> dict:
     post_body_value_field = ""
     max_embed_field_length = 1024
@@ -93,12 +94,10 @@ def create_embed(
         },
     }
 
-    image = get_image_for_embed(post_body)
-    if image:
-        embed["image"] = {"url": image}
+    if image_url:
+        embed["image"] = {"url": image_url}
 
     # this is so messy lmao
-    prices = get_prices_from_reddit_post(post_body)
     if prices:
         fields = embed.get("fields", None)
         if fields:
