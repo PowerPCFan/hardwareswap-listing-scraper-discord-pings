@@ -127,7 +127,7 @@ def send_webhook(
         "username": username if username is not None else ""
     }
 
-    logger.debug(f"Sending Discord webhook to: {webhook_url}...")
+    logger.debug(f"Sending Discord webhook to {webhook_url[:30]} (truncated)...")
 
     # Send the webhook
     try:

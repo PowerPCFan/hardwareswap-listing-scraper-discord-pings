@@ -1,6 +1,3 @@
-- figure out a way to make sure logging webhook queue fully empties even if the app crashes or is terminated, so I can see the last logs and/or crash reason in discord without having to SSH and check tmux terminal history
-  - logging to a file is probably more feasible than this
-  - also, the discord logs are cool but realistically do i need a webhook sending every log? idk i could probably remove it
 - find a way to convert tables like this https://discord.com/channels/1444776915880775803/1444779357531934761/1447832461466800168 to plaintext that's still readable
 - https://discord.com/channels/1205677964130258944/1232855579010138162/1448837052656517191
 - figure out why old posts are sometimes being retrieved even if debug mode and therefore retrieve old posts or whatever its called is off

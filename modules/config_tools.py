@@ -35,6 +35,7 @@ class Config:
     combine_images: bool
     ping_for_warnings: bool
     check_if_post_was_deleted: bool
+    file_logging: bool
 
     cdn_exploit_webhook: str
 

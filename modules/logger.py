@@ -3,6 +3,7 @@ import time
 import queue
 import threading
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from .configuration import config
 from . import webhook_sender
 
@@ -64,6 +65,24 @@ class Logger(logging.Formatter):
 fmt = Logger()
 
 
+class FileLogger(logging.Formatter):
+    def __init__(self):
+        super().__init__()
+        self._format = "[ %(levelname)s ]    %(message)s    [%(asctime)s (%(filename)s:%(funcName)s)]"
+        self.utc_minus_5 = timezone(timedelta(hours=-5))
+
+    def formatTime(self, record, datefmt=None):
+        return datetime.fromtimestamp(record.created, tz=self.utc_minus_5).strftime("%m/%d/%Y %H:%M:%S")
+
+    def format(self, record: logging.LogRecord) -> str:
+        rc = logging.makeLogRecord(record.__dict__)
+        rc.levelname = rc.levelname.center(8)
+
+        formatter = logging.Formatter(self._format)
+        formatter.formatTime = self.formatTime
+        return formatter.format(rc)
+
+
 class CustomLogger:
     def __init__(self, base_logger):
         self.base_logger: logging.Logger = base_logger
@@ -123,13 +142,79 @@ class CustomLogger:
             print("[ ERROR ] Failed to send newline to Discord webhook!")
 
 
-_base_logger = logging.getLogger("vscode-status")
+class FileLoggingHandler(logging.Handler):
+    def __init__(self, log_file_path: str, level: int = logging.NOTSET):
+        super().__init__(level)
+        self.log_file_path = Path(log_file_path)
+        self.message_queue = queue.Queue()
+        self.worker_thread = None
+        self.shutdown_flag = threading.Event()
+        self._start_worker()
+
+    def _start_worker(self):
+        if self.worker_thread is None or not self.worker_thread.is_alive():
+            self.worker_thread = threading.Thread(target=self._worker, daemon=True)
+            self.worker_thread.start()
+
+    def _worker(self):
+        self.log_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        while not self.shutdown_flag.is_set():
+            try:
+                content = self.message_queue.get(timeout=1.0)
+                if content is None:
+                    break
+
+                with open(self.log_file_path, 'a', encoding='utf-8') as f:
+                    f.write(content + '\n')
+                    f.flush()
+
+                self.message_queue.task_done()
+
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"[ ERROR ] File logging worker error: {e}")
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            level_name = logging.getLevelName(record.levelno).center(8)
+            asctime = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime(record.created))
+            message = record.getMessage()
+
+            content = f"[ {level_name} ]    {message}    [{asctime} ({record.filename}:{record.funcName})]"
+
+            self.message_queue.put(content)
+
+        except Exception:
+            print("[ ERROR ] Failed to queue log for file!")
+
+    def close(self):
+        self.shutdown_flag.set()
+        self.message_queue.put(None)
+        if self.worker_thread and self.worker_thread.is_alive():
+            self.worker_thread.join(timeout=5.0)
+        super().close()
+
+
+_base_logger = logging.getLogger("hardwareswap-listing-scraper-discord-pings")
 _base_logger.setLevel(logging.DEBUG)
 
 handler = logging.StreamHandler()
 handler.setFormatter(fmt)
 handler.setLevel(setLevelValue)
 _base_logger.addHandler(handler)
+
+if config.file_logging:
+    try:
+        log_dir = Path(__file__).parent.parent / "logs"
+        log_file_path = log_dir / f"logs-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
+
+        file_handler = FileLoggingHandler(str(log_file_path))
+        file_handler.setLevel(setLevelValue)
+        _base_logger.addHandler(file_handler)
+    except Exception as e:
+        print(f"[ ERROR ] Failed to setup file logging: {e}")
 
 logger = CustomLogger(_base_logger)
 
@@ -145,13 +230,11 @@ class DiscordWebhookHandler(logging.Handler):
         self._start_worker()
 
     def _start_worker(self):
-        """Start the worker thread that processes the message queue"""
         if self.worker_thread is None or not self.worker_thread.is_alive():
             self.worker_thread = threading.Thread(target=self._worker, daemon=True)
             self.worker_thread.start()
 
     def _worker(self):
-        """Worker thread that processes queued messages with delays"""
         while not self.shutdown_flag.is_set():
             try:
                 content = self.message_queue.get(timeout=1.0)
