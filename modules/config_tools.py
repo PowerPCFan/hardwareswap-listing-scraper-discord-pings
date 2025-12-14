@@ -38,7 +38,7 @@ class Config:
     file_logging: bool
 
     filter_old_posts: bool
-    old_post_threshold_seconds: int
+    old_post_threshold_seconds: int | None
 
     cdn_exploit_webhook: str
 
