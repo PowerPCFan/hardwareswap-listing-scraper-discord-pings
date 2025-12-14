@@ -1,6 +1,8 @@
 - find a way to convert tables like this https://discord.com/channels/1444776915880775803/1444779357531934761/1447832461466800168 to plaintext that's still readable
 - idea: https://discord.com/channels/1205677964130258944/1232855579010138162/1448837052656517191
 - how come https://discord.com/channels/1444776915880775803/1444859609188929536/1449447187514917077 didn't go to Nvidia GPUs as expected? it only went to SSDs channel (listing for "1660 Super + 250gb 970Evo NVME SSD"). it's because the current filters look for keywords in the title only, not the body of the post. so it didnt see the "gtx" in the post body. decide whether i should enable post body parsing or change the filters to be more specific like adding every single nvidia gpu model to a plaintext or regex filter
+
+
 - figure out why old posts are sometimes being retrieved even if debug mode and therefore retrieve old posts or whatever its called is off
   - Note: possibly band-aid fixed with the recent addition of skipping posts older than 10 minutes
     - maybe the fix isnt necessary? https://www.reddit.com/r/hardwareswap/s/SvE7W5i5BE this posted right as the hwsbot comment posted, the bot and my script posted 5 hours late - maybe its a reddit API issue possibly related to the recent changes
@@ -8,3 +10,5 @@
       - over 200 examples https://discord.com/channels/1444776915880775803/1446113571032272997/1449288015754035263
   - possibly related to the issue causing the above problem, its just really buggy rn, for example https://discord.com/channels/1444776915880775803/1444779527497711749/1448873848983257291 didnt go to ddr4 and ddr5 channels when it should have, and it posted twice
 - OK so new idea, either have it show posts no older than five hours ago or show all posts when they're received by the Reddit API, even if they are really outdated, but in order to make sure that they don't get double sent due to API glitches, store a list of namedtuples containing post ID/url and category posted in to avoid double posts
+- just got some important information regarding the late posts bug... all of the posts that are being retrieved late are posts that were immediately flagged by automod upon posting and marked for further review by hardwareswap moderators, and then some time later, presumably when a moderator allows it, the hwsbot comments on the post, and my bot finally retrieves it. So I should probably allow all posts that come in the stream and remove my manual check because they are probably not going to be too old unless it takes the moderators are really long time to approve them, and it's not a bug, it's the intended behavior.
+- I just need a way to figure out how to reduce the mass pings that occur when a moderator allows a bunch of posts at once 
