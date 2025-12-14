@@ -37,6 +37,9 @@ class Config:
     check_if_post_was_deleted: bool
     file_logging: bool
 
+    filter_old_posts: bool
+    old_post_threshold_seconds: int
+
     cdn_exploit_webhook: str
 
     logger_webhook: str

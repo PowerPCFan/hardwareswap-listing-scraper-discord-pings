@@ -27,16 +27,17 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
             logger.warning(f"Skipping submission with missing data: {submission.url or 'Unknown URL'}")
             continue
 
-        # if the post is older than 10 minutes, skip it
-        if (time.time() - utc_date > 600) and not config.debug_mode:
-            logger.warning(f"Old submission was mistakenly retrieved: {url}. Skipping.")
-            continue
+        if config.filter_old_posts:
+            # if the post is older than the threshold, skip it
+            if ((time.time() - utc_date) > config.old_post_threshold_seconds) and not config.debug_mode:
+                logger.warning(f"Submission older than {config.old_post_threshold_seconds} seconds was retrieved: {url}. Skipping.")
+                continue
 
         if config.check_if_post_was_deleted:
             time.sleep(10)  # allow 10 seconds for automod to delete the post
             refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id)
             if refresh_post.removed_by_category:
-                logger.warning(f"Submission {url} was removed. Skipping.")
+                logger.info(f"Submission {url} was removed. Skipping.")
                 continue
 
         h, w, title_only_h = parse_have_want(
