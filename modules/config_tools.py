@@ -36,6 +36,7 @@ class Config:
     ping_for_warnings: bool
     check_if_post_was_deleted: bool
     file_logging: bool
+    check_usl: bool
 
     filter_old_posts: bool
     old_post_threshold_seconds: int | None

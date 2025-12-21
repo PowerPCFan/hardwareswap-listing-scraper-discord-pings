@@ -1,4 +1,5 @@
 import time
+from . import usl
 from . import reddit
 from .configuration import config
 from .utils import parse_have_want, print_new_post, matches_pattern, is_globally_blocked, matches_blocklist_override
@@ -30,7 +31,12 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
         if config.filter_old_posts:
             # if the post is older than the threshold, skip it
             if ((time.time() - utc_date) > config.old_post_threshold_seconds) and not config.debug_mode:
-                logger.warning(f"Submission older than {config.old_post_threshold_seconds} seconds was retrieved: {url}. Skipping.")
+                logger.warning(f"Submission older than {config.old_post_threshold_seconds} seconds was retrieved: {url}. Skipping.")  # noqa: E501
+                continue
+
+        if config.check_usl:
+            if usl.is_on_usl(author.name):
+                logger.info(f"u/{author.name} is on the USL. Skipping post {url}.")
                 continue
 
         if config.check_if_post_was_deleted:

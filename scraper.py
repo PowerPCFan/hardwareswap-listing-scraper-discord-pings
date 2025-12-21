@@ -53,6 +53,7 @@ def main() -> None:
     logger.info(f"Ping for Warnings: {config.ping_for_warnings}")
     logger.info(f"Check If Post Was Deleted: {config.check_if_post_was_deleted}")
     logger.info(f"File Logging: {config.file_logging}")
+    logger.info(f"Check USL: {config.check_usl}")
     logger.info(f"Configured {len(config.pings)} ping categories")
     logger.info(f"Configured global blocklist with {len(config.global_blocklist)} patterns")
     logger.info("Press Ctrl+C to exit")
