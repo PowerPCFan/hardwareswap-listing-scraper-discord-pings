@@ -5,7 +5,7 @@ from .logger import logger
 
 def is_on_usl(username: str) -> bool:
     username = username.lower()
-    url = f"https://corsproxy.io/?url=api.reddit.com/r/UniversalScammerList/wiki/database/{username}.json"
+    url = f"https://corsproxy.io/?url=https://api.reddit.com/r/UniversalScammerList/wiki/database/{username}.json"
 
     try:
         response = requests.get(url)
