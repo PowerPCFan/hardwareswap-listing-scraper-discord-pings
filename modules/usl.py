@@ -5,7 +5,7 @@ from .logger import logger
 
 def is_on_usl(username: str) -> bool:
     username = username.lower()
-    url = f"https://corsproxy.io/?url=https://api.reddit.com/r/UniversalScammerList/wiki/database/{username}.json"
+    url = f"https://api.reddit.com/r/UniversalScammerList/wiki/database/{username}.json"
 
     try:
         response = requests.get(url)
@@ -34,7 +34,7 @@ def is_on_usl(username: str) -> bool:
 
     if response.status_code == 200:
         return True  # User is on the USL
-    elif response.status_code in (400, 403, 404):
+    elif response.status_code in (400, 404):
         return False  # User is not on the USL
     else:
         logger.warning(f"Unexpected status code from USL API for user u/{username}: {response.status_code}. Treating as on USL.")  # noqa: E501
