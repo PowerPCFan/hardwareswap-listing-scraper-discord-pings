@@ -1,16 +1,19 @@
-# TODO: fix this
-
 import requests
 import time
 from .logger import logger
+from .configuration import config
 
 
 def is_on_usl(username: str) -> bool:
     username = username.lower()
     url = f"https://api.reddit.com/r/UniversalScammerList/wiki/database/{username}.json"
 
+    headers = {
+        "User-Agent": f"script:hardwareswap-listing-scraper-discord-pings-edition (by u/{config.reddit_username})"
+    }
+
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
     except requests.RequestException as e:
         logger.warning(f"Error checking USL for {username}: {e}. Treating as on USL.")
         return True  # Assume user is on USL
