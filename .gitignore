@@ -1,8 +1,9 @@
-/venv
+venv/
 config.py
 config.json
 *.pyc
 **/__pycache__/
-/version-*-backup
-/temp-images
-/logs
+version-*-backup/
+temp-images/
+logs/
+data/

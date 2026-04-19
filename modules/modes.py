@@ -6,6 +6,7 @@ from .utils import parse_have_want, print_new_post, matches_pattern, is_globally
 from .logger import logger
 from .imgur import get_image_for_embed
 from .price import get_prices_from_reddit_post
+from .seen_items import seen_db
 
 
 def match(initialize_response: reddit.InitializeResponse) -> None:
@@ -13,6 +14,7 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
     post_stream = initialize_response.subreddit.stream.submissions(skip_existing=(not config.debug_mode))
 
     for submission in post_stream:
+        submission_id = submission.id
         title = submission.title
         body = submission.selftext
         author = submission.author
@@ -20,23 +22,38 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
         url = submission.url
         flair_text = submission.author_flair_text
 
+        if not submission_id:
+            logger.warning(f"Skipping submission with missing ID: {url or 'Unknown URL'}")
+            continue
+
+        if seen_db.is_seen(submission_id):
+            logger.debug(f"Skipping already seen submission: {url}")
+            continue
+
         logger.debug(f"Processing new submission: {url}")
+
+        def mark_submission_seen() -> None:
+            seen_db.mark_seen(item_id=submission_id, category_name="hardwareswap", title=title)
+            seen_db.commit_seen_items()
 
         # note: flair not included bc sometimes users have no flair instead of the default "Trades: None" or whatever
         # also didn't include url since it exists 99.99999% of the time
         if None in [title, body, author, utc_date]:
             logger.warning(f"Skipping submission with missing data: {submission.url or 'Unknown URL'}")
+            mark_submission_seen()
             continue
 
         if config.filter_old_posts:
             # if the post is older than the threshold, skip it
             if ((time.time() - utc_date) > config.old_post_threshold_seconds) and not config.debug_mode:
                 logger.warning(f"Submission older than {config.old_post_threshold_seconds} seconds was retrieved: {url}. Skipping.")  # noqa: E501
+                mark_submission_seen()
                 continue
 
         if config.check_usl:
             if usl.is_on_usl(author.name):
                 logger.info(f"u/{author.name} is on the USL. Skipping post {url}.")
+                mark_submission_seen()
                 continue
 
         if config.check_if_post_was_deleted:
@@ -44,6 +61,7 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
             refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id)
             if refresh_post.removed_by_category:
                 logger.info(f"Submission {url} was removed. Skipping.")
+                mark_submission_seen()
                 continue
 
         h, w, title_only_h = parse_have_want(
@@ -128,3 +146,5 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
             )
         elif len(matched_categories) == 0:
             logger.debug(f"Post did not match any categories: {url}")
+
+        mark_submission_seen()
