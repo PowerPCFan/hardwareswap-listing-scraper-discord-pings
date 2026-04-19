@@ -1,17 +1,18 @@
-import json
+import json5
 import os
+import pathlib
 from dataclasses import dataclass
 
-CONFIG_JSON = "config.json"
+for ext in ["json", "json5", "jsonc"]:
+    CONFIG_JSON = pathlib.Path(__file__).parent.parent / f"config.{ext}"
+    if CONFIG_JSON.exists():
+        break
+else:
+    raise FileNotFoundError("Error: No config file found")
 
 
 @dataclass
 class PingConfig:
-    # chat if you're new to the stream
-    # h is short for have
-    # w is short for want
-    # and calc is short for calculator
-
     category_name: str
 
     h: list[str]
@@ -64,7 +65,7 @@ class Config:
             raise FileNotFoundError(f"Error: {CONFIG_JSON} not found.")
 
         with open(CONFIG_JSON) as f:
-            data = json.load(f)
+            data = json5.load(f)
 
         pings_data = data.pop("pings", [])
         pings = [PingConfig(**ping_data) for ping_data in pings_data]

@@ -52,15 +52,16 @@ def create_embed(
         "color": 0x3498db,
 
         "fields": [
-            {
-                "name": "User:",
-                "value": f"[u/{author}](https://www.reddit.com/user/{author})",
-                "inline": False
-            },
+            # {
+            #     "name": "User:",
+            #     "value": f"[u/{author}](https://www.reddit.com/user/{author})",
+            #     "inline": False
+            # },
             {
                 "name": "User Info:",
                 "value": (
-                    "ℹ️ *Be sure to check these values, they can be helpful for spotting scams!*\n"
+                    # "ℹ️ *Be sure to check these values, they can be helpful for spotting scams!*\n"
+                    f"- Username: [u/{author}](https://www.reddit.com/user/{author})\n"
                     f"- **{trades}** trades\n"
                     f"- Joined **{joined}**\n"
                     f"- **{post_karma}** post karma\n"
