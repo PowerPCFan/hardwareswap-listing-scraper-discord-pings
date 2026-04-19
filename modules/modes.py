@@ -33,7 +33,7 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
         logger.debug(f"Processing new submission: {url}")
 
         def mark_submission_seen() -> None:
-            seen_db.mark_seen(item_id=submission_id, category_name="hardwareswap", title=title)
+            seen_db.mark_seen(item_id=submission_id, title=title)
             seen_db.commit_seen_items()
 
         # note: flair not included bc sometimes users have no flair instead of the default "Trades: None" or whatever

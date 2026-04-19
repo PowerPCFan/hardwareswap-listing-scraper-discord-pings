@@ -21,7 +21,7 @@ SEEN_DB_COMMIT_BATCH_SIZE = 8
 class SeenItemsDB:
     def __init__(self, db_path: Path = db_path) -> None:
         self.db_path = db_path
-        self.item_queue: list[tuple[str, int, str | None, str]] = []
+        self.item_queue: list[tuple[str, int, str]] = []
         self.temp_seen: set[str] = set()
         self.temp_seen_order: deque[str] = deque()
         self.init_db()
@@ -62,7 +62,6 @@ class SeenItemsDB:
                     CREATE TABLE IF NOT EXISTS seen_items (
                         item_id        TEXT     PRIMARY KEY,
                         timestamp      INTEGER  NOT NULL,
-                        category_name  TEXT,
                         title          TEXT
                     )
                     """
@@ -96,11 +95,10 @@ class SeenItemsDB:
     def mark_seen(
         self,
         item_id: str,
-        category_name: str | None = None,
         title: str = "",
     ) -> None:
         current_time = int(time.time())
-        self.item_queue.append((item_id, current_time, category_name, title))
+        self.item_queue.append((item_id, current_time, title))
         self._add_temp_seen(item_id)
         logger.debug(f"Queued item {item_id} to be marked as seen")
 
@@ -118,8 +116,8 @@ class SeenItemsDB:
                 conn.executemany(
                     """
                     INSERT OR REPLACE INTO seen_items
-                    (item_id, timestamp, category_name, title)
-                    VALUES (?, ?, ?, ?)
+                    (item_id, timestamp, title)
+                    VALUES (?, ?, ?)
                     """,
                     self.item_queue,
                 )
