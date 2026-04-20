@@ -3,3 +3,5 @@ requests
 packaging
 pillow
 json5
+markdown
+beautifulsoup4

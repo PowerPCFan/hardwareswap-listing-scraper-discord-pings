@@ -107,7 +107,7 @@ def parse_have_want(title: str, body: str | None = None, include_body: bool = Fa
 
 
 def print_new_post(
-    author: reddit.Redditor, h: str, w: str, title_only_h: str, url: str, utc_date: float, flair: str,
+    author: reddit.Redditor, title: str, h: str, w: str, title_only_h: str, url: str, utc_date: float, flair: str,
     webhook: str, role: int, post_body: str, image_url: str | None, prices: Price | None,
     category_name: str | None = None, is_all_listings_webhook: bool = False
 ) -> None:
@@ -128,6 +128,7 @@ def print_new_post(
             url=url,
             author=author.name,
             trades=trades,
+            title=title,
             have=str(title_only_h).replace("[H]", "").strip(),
             want=str(w).replace("[W]", "").strip(),
             joined=j,

@@ -47,6 +47,7 @@ def grab_direct_links(album_url: str) -> list[str] | None:
                 },
             }
         },
+        timeout=30
     )
 
     data: dict = resp.json()
@@ -147,7 +148,7 @@ def upload_to_discord_cdn(file_path: Path, content: str = "") -> str | None:
         with open(file_path, "rb") as f:
             files = {"file": ("image.png", f)}
             payload = {"content": content}
-            response = requests.post(config.cdn_exploit_webhook, data=payload, files=files)
+            response = requests.post(config.cdn_exploit_webhook, data=payload, files=files, timeout=30)
 
         if response.status_code != 200 and response.status_code != 204:
             return None

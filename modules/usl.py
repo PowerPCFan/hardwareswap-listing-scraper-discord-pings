@@ -13,10 +13,10 @@ def is_on_usl(username: str) -> bool:
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=3)
     except requests.RequestException as e:
-        logger.warning(f"Error checking USL for {username}: {e}. Treating as on USL.")
-        return True  # Assume user is on USL
+        logger.warning(f"Error checking USL for {username}: {e}. Treating as safe.")
+        return False  # Assume user is not on USL
 
     retries = 0
     while response.status_code == 429 and retries < 3:
@@ -30,10 +30,10 @@ def is_on_usl(username: str) -> bool:
         time.sleep(retry_after)
 
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=headers, timeout=3)
         except requests.RequestException as e:
-            logger.warning(f"Error checking USL for {username}: {e}. Treating as on USL.")
-            return True  # Assume user is on USL
+            logger.warning(f"Error checking USL for {username}: {e}. Treating as safe.")
+            return False  # Assume user is not on USL
 
         retries += 1
 
@@ -42,5 +42,5 @@ def is_on_usl(username: str) -> bool:
     elif response.status_code in (400, 404):
         return False  # User is not on the USL
     else:
-        logger.warning(f"Unexpected status code from USL API for user u/{username}: {response.status_code}. Treating as on USL.")  # noqa: E501
-        return True  # Unrecognized response, treat as on USL
+        logger.warning(f"Unexpected status code from USL API for user u/{username}: {response.status_code}. Treating as safe.")  # noqa: E501
+        return False  # Unrecognized response, treat as not on USL

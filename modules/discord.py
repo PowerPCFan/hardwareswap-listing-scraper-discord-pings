@@ -1,14 +1,118 @@
 import requests
 import time
+import markdown
 import re as regexp
+from bs4 import BeautifulSoup
 from .logger import logger
 from .price import Price
+
+
+# todo: move to config file
+# i should probably do this to my ebay scraper as well
+class Emojis:
+    CALENDAR = "<:calendar:1453717238702932028>"
+    PRICE = "<:price:1453719493686853632>"
+    SELLER = "<:seller:1453721027103428609>"
+    WARNING = "⚠️"
+    EXCLAMATION = "<:exclamation_mark:1477510984225525800>"
+    INFO = "<:info:1477510894069092493>"
+    CHECK = "<:check:1477511079625101415>"
+
+
+# def clean_body(input_string: str, max_len: int = 1024) -> str:
+#     try:
+#         trunc_text = "\n... (view full post on Reddit)"
+#         max_len = max_len - len(trunc_text)
+#         if max_len < 0:
+#             return ""
+
+#         # converts markdown -> html and then html -> text
+#         txt = BeautifulSoup(markdown.markdown(input_string), "html.parser").get_text()
+#         txt = "\n".join(f"> {line}" if line.strip() else ">" for line in txt.splitlines())
+
+#         if len(txt) < max_len:
+#             # all good
+#             txt = txt
+#         else:
+#             # split into lines and trim until we're under the limit
+#             txt_lines = txt.splitlines()
+#             while len("\n".join(txt_lines)) > max_len and txt_lines:
+#                 txt_lines.pop()
+#             txt = "\n".join(txt_lines)
+
+#         idx = 0
+#         while True:
+#             if idx >= 10:
+#                 break
+
+#             if regexp.match(
+#                 r"^>*\s*$",
+#                 txt.splitlines()[-1],
+#                 regexp.MULTILINE | regexp.IGNORECASE | regexp.UNICODE
+#             ):
+#                 txt = "\n".join(line for line in txt.splitlines()[:-1])
+
+#             idx += 1
+
+#         return txt + trunc_text
+#     except Exception:
+#         logger.exception("Error parsing body")
+#         return input_string
+
+
+def clean_body(input_string: str, max_len: int = 1024) -> str:
+    try:
+        trunc_text = "\n... (view full post on Reddit)"
+        max_len -= len(trunc_text)
+
+        if max_len < 0:
+            return ""
+
+        txt = BeautifulSoup(
+            markdown.markdown(input_string),
+            "html.parser"
+        ).get_text()
+
+        txt = "\n".join(
+            f"> {line}" if line.strip() else ">"
+            for line in txt.splitlines()
+        )
+
+        lines = txt.splitlines()
+        if len(txt) > max_len:
+            while lines and len("\n".join(lines)) > max_len:
+                lines.pop()
+            txt = "\n".join(lines)
+
+        for _ in range(10):
+            lines = txt.splitlines()
+            if not lines:
+                break
+
+            last = lines[-1]
+
+            if regexp.match(
+                r"^>*\s*$",
+                last,
+                regexp.MULTILINE | regexp.IGNORECASE | regexp.UNICODE
+            ):
+                lines.pop()
+                txt = "\n".join(lines)
+            else:
+                break
+
+        return txt + trunc_text
+
+    except Exception:
+        logger.exception("Error parsing body")
+        return input_string
 
 
 def create_embed(
     url: str,
     author: str,
     trades: str,
+    title: str,
     have: str,
     want: str,
     joined: str,
@@ -19,49 +123,22 @@ def create_embed(
     prices: Price | None,
     image_url: str | None
 ) -> dict:
-    post_body_value_field = ""
-    max_embed_field_length = 1024
+    body = clean_body(post_body, max_len=512)
 
-    # turn post body into markdown blockquote
-    for line in post_body.split("\n"):
-        line = "> " + line
-        post_body_value_field += line + "\n"
-
-    # strip some markdown like headings (use regex to ensure the # is at the start of the line)
-    post_body_value_field = regexp.sub(r"^(?:\s*>)*\s*#{1,6}\s*", "> ", post_body_value_field, flags=regexp.MULTILINE)
-
-    # Converts something like [https://google.com](https://google.com) to just https://google.com,
-    # since Discord doesn't display links with a URL as display text (even if it's the same url) to avoid phishing.
-    # Doesn't touch links like [Google](https://google.com) since those are valid in Discord.
-    post_body_value_field = regexp.sub(r"\[([^\]]+)\]\(\1\)", r"\1", post_body_value_field, flags=regexp.MULTILINE)
-
-    # truncate if too long
-    if len(post_body_value_field) > max_embed_field_length:
-        truncation_text = "... (view full post content on Reddit)"
-        length = max_embed_field_length - len(truncation_text)
-        post_body_value_field = post_body_value_field[:length] + truncation_text
-
-        # silly goobery thingy
-        if post_body_value_field.endswith("\n> "):
-            post_body_value_field = post_body_value_field[:-3] + "\n" + truncation_text
-        post_body_value_field = post_body_value_field.replace(f"> {truncation_text}", truncation_text)
+    title = f"u/{author} posted a new listing: {title}"
+    if len(title) > 256:
+        title = title[:253] + "..."
 
     embed = {
-        "title": f"A new listing by u/{author} has been posted on r/HardwareSwap!",
+        "title": title,
         "url": url,
         "color": 0x3498db,
 
         "fields": [
-            # {
-            #     "name": "User:",
-            #     "value": f"[u/{author}](https://www.reddit.com/user/{author})",
-            #     "inline": False
-            # },
             {
-                "name": "User Info:",
+                "name": f"{Emojis.SELLER} User Info:",
                 "value": (
-                    # "ℹ️ *Be sure to check these values, they can be helpful for spotting scams!*\n"
-                    f"- Username: [u/{author}](https://www.reddit.com/user/{author})\n"
+                    f"- Posted by **[u/{author}](https://www.reddit.com/user/{author})**\n"
                     f"- **{trades}** trades\n"
                     f"- Joined **{joined}**\n"
                     f"- **{post_karma}** post karma\n"
@@ -70,23 +147,23 @@ def create_embed(
                 "inline": False
             },
             {
-                "name": "Has:",
+                "name": f"{Emojis.CHECK} Has:",
                 "value": have,
                 "inline": False
             },
             {
-                "name": "Wants:",
+                "name": f"{Emojis.EXCLAMATION} Wants:",
                 "value": want,
                 "inline": False
             },
             {
-                "name": "Date Posted:",
+                "name": f"{Emojis.CALENDAR} Date Posted:",
                 "value": date_posted,
                 "inline": False
             },
             {
-                "name": "Post Content:",
-                "value": post_body_value_field,
+                "name": f"{Emojis.INFO} Post Content:",
+                "value": body,
                 "inline": False
             }
         ],
@@ -105,7 +182,7 @@ def create_embed(
             fields = list(fields)
             if prices.price_string and len(prices.prices) > 0:
                 fields.insert(-2, {
-                    "name": "Prices:" if len(prices.prices) > 1 else "Price:",
+                    "name": Emojis.PRICE + (" Prices:" if len(prices.prices) > 1 else " Price:"),
                     "value": prices.price_string,
                     "inline": False
                 })
@@ -132,7 +209,7 @@ def send_webhook(
 
     # Send the webhook
     try:
-        response = requests.post(webhook_url, json=json_data)
+        response = requests.post(webhook_url, json=json_data, timeout=5)
 
         if response.status_code == 429:
             logger.warning("Discord rate limit hit, retrying after delay...")
@@ -142,11 +219,11 @@ def send_webhook(
                 retry_after = dict(response.json()).get("retry_after", default_retry)
                 logger.debug(f"Rate limit retry delay: {retry_after}s")
                 time.sleep(retry_after)
-                response = requests.post(webhook_url, json=json_data)
+                response = requests.post(webhook_url, json=json_data, timeout=5)
             except ValueError:
                 logger.debug(f"Using default retry delay: {default_retry}s")
                 time.sleep(default_retry)
-                response = requests.post(webhook_url, json=json_data)
+                response = requests.post(webhook_url, json=json_data, timeout=5)
 
         if response.status_code not in [200, 204]:
             logger.error(f"Webhook failed with status {response.status_code}: {response.text}")

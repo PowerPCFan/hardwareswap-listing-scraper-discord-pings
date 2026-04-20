@@ -84,6 +84,7 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
             # Send to all listings webhook (always send regardless of global blocklist)
             print_new_post(
                 author=author,
+                title=title,
                 h=h,
                 w=w,
                 title_only_h=title_only_h,
@@ -123,6 +124,7 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
 
                     print_new_post(
                         author=author,
+                        title=title,
                         h=h,
                         w=w,
                         title_only_h=title_only_h,
