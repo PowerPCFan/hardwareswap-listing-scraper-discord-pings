@@ -14,139 +14,146 @@ def match(initialize_response: reddit.InitializeResponse) -> None:
     post_stream = initialize_response.subreddit.stream.submissions(skip_existing=(not config.debug_mode))
 
     for submission in post_stream:
-        submission_id = submission.id
-        title = submission.title
-        body = submission.selftext
-        author = submission.author
-        utc_date = submission.created_utc
-        url = submission.url
-        flair_text = submission.author_flair_text
+        try:
+            submission_id = submission.id
+            title = submission.title
+            body = submission.selftext
+            author = submission.author
+            utc_date = submission.created_utc
+            url = submission.url
+            flair_text = submission.author_flair_text
 
-        if not submission_id:
-            logger.warning(f"Skipping submission with missing ID: {url or 'Unknown URL'}")
-            continue
+            if not submission_id:
+                logger.warning(f"Skipping submission with missing ID: {url or 'Unknown URL'}")
+                continue
 
-        if seen_db.is_seen(submission_id):
-            logger.debug(f"Skipping already seen submission: {url}")
-            continue
+            if seen_db.is_seen(submission_id):
+                logger.debug(f"Skipping already seen submission: {url}")
+                continue
 
-        logger.debug(f"Processing new submission: {url}")
+            logger.debug(f"Processing new submission: {url}")
 
-        def mark_submission_seen() -> None:
-            seen_db.mark_seen(item_id=submission_id, title=title)
-            seen_db.commit_seen_items()
+            def mark_submission_seen() -> None:
+                seen_db.mark_seen(item_id=submission_id, title=title)
+                seen_db.commit_seen_items()
 
-        # note: flair not included bc sometimes users have no flair instead of the default "Trades: None" or whatever
-        # also didn't include url since it exists 99.99999% of the time
-        if None in [title, body, author, utc_date]:
-            logger.warning(f"Skipping submission with missing data: {submission.url or 'Unknown URL'}")
-            mark_submission_seen()
-            continue
-
-        if config.filter_old_posts:
-            # if the post is older than the threshold, skip it
-            if ((time.time() - utc_date) > config.old_post_threshold_seconds) and not config.debug_mode:
-                logger.warning(f"Submission older than {config.old_post_threshold_seconds} seconds was retrieved: {url}. Skipping.")  # noqa: E501
+            # note: flair not included bc some users have no flair instead of the default "Trades: None" or whatever
+            # also didn't include url since it exists 99.99999% of the time
+            if None in [title, body, author, utc_date]:
+                logger.warning(f"Skipping submission with missing data: {submission.url or 'Unknown URL'}")
                 mark_submission_seen()
                 continue
 
-        if config.check_usl:
-            if usl.is_on_usl(author.name):
-                logger.info(f"u/{author.name} is on the USL. Skipping post {url}.")
-                mark_submission_seen()
-                continue
+            if config.filter_old_posts:
+                # if the post is older than the threshold, skip it
+                if ((time.time() - utc_date) > config.old_post_threshold_seconds) and not config.debug_mode:
+                    logger.warning(f"Submission older than {config.old_post_threshold_seconds} seconds was retrieved: {url}. Skipping.")  # noqa: E501
+                    mark_submission_seen()
+                    continue
 
-        if config.check_if_post_was_deleted:
-            time.sleep(10)  # allow 10 seconds for automod to delete the post
-            refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id)
-            if refresh_post.removed_by_category:
-                logger.info(f"Submission {url} was removed. Skipping.")
-                mark_submission_seen()
-                continue
+            if config.check_usl:
+                if usl.is_on_usl(author.name):
+                    logger.info(f"u/{author.name} is on the USL. Skipping post {url}.")
+                    mark_submission_seen()
+                    continue
 
-        h, w, title_only_h = parse_have_want(
-            title=title,
-            body=body if config.parse_body else None,
-            include_body=config.parse_body
-        )
+            if config.check_if_post_was_deleted:
+                time.sleep(10)  # allow 10 seconds for automod to delete the post
+                refresh_post = reddit.Submission(reddit=initialize_response.reddit, id=submission.id)
+                if refresh_post.removed_by_category:
+                    logger.info(f"Submission {url} was removed. Skipping.")
+                    mark_submission_seen()
+                    continue
 
-        logger.info(f"New post from u/{author.name}: {url}")
-
-        image_url = None
-        prices = None
-        img_and_prices_retrieved = False
-
-        if config.all_listings_webhook and config.all_listings_role:
-            image_url = get_image_for_embed(body)
-            prices = get_prices_from_reddit_post(body)
-            img_and_prices_retrieved = True
-
-            # Send to all listings webhook (always send regardless of global blocklist)
-            print_new_post(
-                author=author,
+            h, w, title_only_h = parse_have_want(
                 title=title,
-                h=h,
-                w=w,
-                title_only_h=title_only_h,
-                url=url,
-                utc_date=utc_date,
-                flair=flair_text,
-                post_body=body,
-                webhook=config.all_listings_webhook,
-                role=config.all_listings_role,
-                is_all_listings_webhook=True,
-                image_url=image_url,
-                prices=prices
+                body=body if config.parse_body else None,
+                include_body=config.parse_body
             )
 
-        matched_categories = []
+            logger.info(f"New post from u/{author.name}: {url}")
 
-        for ping_config in config.pings:
-            if (
-                any(matches_pattern(h, pattern) for pattern in ping_config.h) and
-                any(matches_pattern(w, pattern) for pattern in ping_config.w) and
-                not any(matches_pattern(h, pattern) for pattern in ping_config.not_h) and
-                not any(matches_pattern(w, pattern) for pattern in ping_config.not_w)
-            ):
-                has_override = matches_blocklist_override(h, w, title_only_h, ping_config.blocklist_override or [])
+            image_url = None
+            prices = None
+            img_and_prices_retrieved = False
 
-                if has_override or not is_globally_blocked(h, w, title_only_h):
-                    matched_categories.append(ping_config.category_name)
-                    if has_override:
-                        logger.info(f"Post matches category: {ping_config.category_name} (blocklist override applied)")
-                    else:
-                        logger.info(f"Post matches category: {ping_config.category_name}")
+            if config.all_listings_webhook and config.all_listings_role:
+                image_url = get_image_for_embed(body)
+                prices = get_prices_from_reddit_post(body)
+                img_and_prices_retrieved = True
 
-                    if not img_and_prices_retrieved:
-                        image_url = get_image_for_embed(body)
-                        prices = get_prices_from_reddit_post(body)
-                        img_and_prices_retrieved = True
+                # Send to all listings webhook (always send regardless of global blocklist)
+                print_new_post(
+                    author=author,
+                    title=title,
+                    h=h,
+                    w=w,
+                    title_only_h=title_only_h,
+                    url=url,
+                    utc_date=utc_date,
+                    flair=flair_text,
+                    post_body=body,
+                    webhook=config.all_listings_webhook,
+                    role=config.all_listings_role,
+                    is_all_listings_webhook=True,
+                    image_url=image_url,
+                    prices=prices
+                )
 
-                    print_new_post(
-                        author=author,
-                        title=title,
-                        h=h,
-                        w=w,
-                        title_only_h=title_only_h,
-                        url=url,
-                        utc_date=utc_date,
-                        flair=flair_text,
-                        post_body=body,
-                        webhook=ping_config.webhook,
-                        role=ping_config.role,
-                        category_name=ping_config.category_name,
-                        image_url=image_url,
-                        prices=prices
-                    )
+            matched_categories = []
 
-        if len(matched_categories) > 1:
-            categories_str = ", ".join(matched_categories)
-            # logger.warning(
-            logger.info(
-                f"Post matches multiple categories which may result in false positives. "
-                f"URL: {url} | Categories: {categories_str}"
-            )
-        elif len(matched_categories) == 0:
-            logger.debug(f"Post did not match any categories: {url}")
+            for ping_config in config.pings:
+                if (
+                    any(matches_pattern(h, pattern) for pattern in ping_config.h) and
+                    any(matches_pattern(w, pattern) for pattern in ping_config.w) and
+                    not any(matches_pattern(h, pattern) for pattern in ping_config.not_h) and
+                    not any(matches_pattern(w, pattern) for pattern in ping_config.not_w)
+                ):
+                    has_override = matches_blocklist_override(h, w, title_only_h, ping_config.blocklist_override or [])
 
-        mark_submission_seen()
+                    if has_override or not is_globally_blocked(h, w, title_only_h):
+                        matched_categories.append(ping_config.category_name)
+                        if has_override:
+                            logger.info(
+                                f"Post matches category: {ping_config.category_name} "
+                                "(blocklist override applied)"
+                            )
+                        else:
+                            logger.info(f"Post matches category: {ping_config.category_name}")
+
+                        if not img_and_prices_retrieved:
+                            image_url = get_image_for_embed(body)
+                            prices = get_prices_from_reddit_post(body)
+                            img_and_prices_retrieved = True
+
+                        print_new_post(
+                            author=author,
+                            title=title,
+                            h=h,
+                            w=w,
+                            title_only_h=title_only_h,
+                            url=url,
+                            utc_date=utc_date,
+                            flair=flair_text,
+                            post_body=body,
+                            webhook=ping_config.webhook,
+                            role=ping_config.role,
+                            category_name=ping_config.category_name,
+                            image_url=image_url,
+                            prices=prices
+                        )
+
+            if len(matched_categories) > 1:
+                categories_str = ", ".join(matched_categories)
+                # logger.warning(
+                logger.info(
+                    f"Post matches multiple categories which may result in false positives. "
+                    f"URL: {url} | Categories: {categories_str}"
+                )
+            elif len(matched_categories) == 0:
+                logger.debug(f"Post did not match any categories: {url}")
+
+            mark_submission_seen()
+        except Exception:
+            bad_url = submission.url if hasattr(submission, "url") and submission.url else "Unknown URL"
+            logger.exception(f"Error processing submission {bad_url}; continuing to next post")

@@ -17,6 +17,8 @@ TEMP_SEEN_TRIM_TO_ITEMS = 200_000
 # batch size
 SEEN_DB_COMMIT_BATCH_SIZE = 8
 
+SEEN_DB_FORCE_COMMIT_INTERVAL_SECONDS = 20
+
 
 class SeenItemsDB:
     def __init__(self, db_path: Path = db_path) -> None:
@@ -24,6 +26,7 @@ class SeenItemsDB:
         self.item_queue: list[tuple[str, int, str]] = []
         self.temp_seen: set[str] = set()
         self.temp_seen_order: deque[str] = deque()
+        self.last_commit_time = time.time()
         self.init_db()
         atexit.register(self.commit_seen_items, True)
 
@@ -106,7 +109,11 @@ class SeenItemsDB:
         if not self.item_queue:
             return
 
-        if not force and len(self.item_queue) < SEEN_DB_COMMIT_BATCH_SIZE:
+        now = time.time()
+        should_commit_for_size = len(self.item_queue) >= SEEN_DB_COMMIT_BATCH_SIZE
+        should_commit_for_time = (now - self.last_commit_time) >= SEEN_DB_FORCE_COMMIT_INTERVAL_SECONDS
+
+        if not force and not should_commit_for_size and not should_commit_for_time:
             return
 
         try:
@@ -125,6 +132,7 @@ class SeenItemsDB:
 
             logger.info(f"Committed {commit_count} items to the seen-items database")
             self.item_queue.clear()
+            self.last_commit_time = now
         except Exception:
             logger.exception("Error committing seen items to database:")
 
